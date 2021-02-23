@@ -29,7 +29,10 @@ def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-} else {
+}
+
+def keystoreFile = System.getenv('KEY_PATH')
+if (keystoreFile != null && !keyStore.isEmpty()) {
     keystoreProperties.setProperty('storePassword', System.getenv('KEY_STORE_PASSWORD'));
     keystoreProperties.setProperty('keyPassword', System.getenv('KEY_PASSWORD'));
     keystoreProperties.setProperty('keyAlias', System.getenv('KEY_ALIAS'));
