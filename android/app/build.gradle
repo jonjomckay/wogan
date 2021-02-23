@@ -32,7 +32,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 def keystoreFile = System.getenv('KEY_PATH')
-if (keystoreFile != null && !keyStore.isEmpty()) {
+if (keystoreFile != null && !keystoreFile.isEmpty()) {
     keystoreProperties.setProperty('storePassword', System.getenv('KEY_STORE_PASSWORD'));
     keystoreProperties.setProperty('keyPassword', System.getenv('KEY_PASSWORD'));
     keystoreProperties.setProperty('keyAlias', System.getenv('KEY_ALIAS'));
