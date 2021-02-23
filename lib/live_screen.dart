@@ -87,26 +87,37 @@ class _LiveScreenState extends State<LiveScreen> {
               child: FutureBuilder(
                 future: SoundsApi().getStationLatestBroadcast(widget.station['id']),
                 builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-
-                  // TODO: This might return nothing? Or an empty list
-                  var broadcast = snapshot.data['data'][0];
-
-                  var start = DateTime.parse(broadcast['start']);
-                  var ends = DateTime.parse(broadcast['end']);
                   var dateFormat = DateFormat.Hm();
 
-                  // _player.
+                  var programmeImage = widget.station['image_url'];
+                  var programmeDate = widget.station['titles']['secondary'];
+                  var programmeTitle = widget.station['titles']['primary'];
+                  var programmeSubtitle = '';
+                  var programmeDuration = 0;
+                  var start;
+                  var ends;
+
+                  if (snapshot.hasData) {
+                    var broadcast = snapshot.data['data'][0];
+
+                    start = DateTime.parse(broadcast['start']);
+                    ends = DateTime.parse(broadcast['end']);
+                    programmeImage = broadcast['programme']['images'][0]['url'];
+                    programmeDate = '${dateFormat.format(start)} - ${dateFormat.format(ends)}';
+                    programmeTitle = broadcast['programme']['titles']['primary'];
+                    programmeSubtitle = broadcast['programme']['titles']['secondary'];
+                    programmeDuration = broadcast['duration'];
+                  }
 
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       CachedNetworkImage(
-                        imageUrl: broadcast['programme']['images'][0]['url'].replaceAll('{recipe}', '624x624'),
+                        imageUrl: programmeImage.replaceAll('{recipe}', '624x624'),
                         filterQuality: FilterQuality.high,
+                        width: MediaQuery.of(context).size.width * 0.9,
+                        height: MediaQuery.of(context).size.width * 0.9,
                         placeholder: (context, url) => Container(
                           margin: EdgeInsets.all(32),
                           alignment: Alignment.center,
@@ -116,12 +127,12 @@ class _LiveScreenState extends State<LiveScreen> {
                         ),
                         errorWidget: (context, url, error) => Icon(Icons.error),
                         imageBuilder: (context, imageProvider) => Container(
-                          width: MediaQuery.of(context).size.width * 0.9,
-                          height: MediaQuery.of(context).size.width * 0.9,
                           decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             image: DecorationImage(
-                                image: imageProvider, fit: BoxFit.contain),
+                                image: imageProvider,
+                                fit: BoxFit.contain
+                            ),
                           ),
                         ),
                       ),
@@ -129,7 +140,7 @@ class _LiveScreenState extends State<LiveScreen> {
                       Container(
                         margin: EdgeInsets.all(4),
                         alignment: Alignment.center,
-                        child: Text('${dateFormat.format(start)} - ${dateFormat.format(ends)}',
+                        child: Text(programmeDate,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Theme.of(context).hintColor,
@@ -139,7 +150,7 @@ class _LiveScreenState extends State<LiveScreen> {
                       Container(
                         margin: EdgeInsets.all(4),
                         alignment: Alignment.center,
-                        child: Text(broadcast['programme']['titles']['primary'],
+                        child: Text(programmeTitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 fontFamily: 'serif',
@@ -150,7 +161,7 @@ class _LiveScreenState extends State<LiveScreen> {
                       Container(
                         margin: EdgeInsets.all(4),
                         alignment: Alignment.center,
-                        child: Text(broadcast['programme']['titles']['secondary'] ?? '',
+                        child: Text(programmeSubtitle ?? '',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Theme.of(context).hintColor,
@@ -166,13 +177,21 @@ class _LiveScreenState extends State<LiveScreen> {
                           return StreamBuilder<Duration>(
                             stream: _player.positionStream,
                             builder: (context, snapshot) {
-                              var playerPosition = snapshot.data ?? Duration.zero;
+                              if (!snapshot.hasData || start == null) {
+                                return SeekBar(
+                                  duration: Duration.zero,
+                                  position: Duration.zero,
+                                  bufferedPosition: Duration.zero,
+                                );
+                              }
+
+                              var playerPosition = snapshot.data;
 
                               // Determine the "live" position in the current broadcast programme
                               var livePosition = ((DateTime.now().millisecondsSinceEpoch - start.millisecondsSinceEpoch) / 1000).round();
 
                               // Get the duration of the current broadcast, not the stream
-                              var duration = Duration(seconds: broadcast['duration']);
+                              var duration = Duration(seconds: programmeDuration);
 
                               // Calculate the player's position relative to the current broadcast
                               var position = duration - (playerDuration - Duration(seconds: livePosition - (duration.inSeconds - playerPosition.inSeconds)));
