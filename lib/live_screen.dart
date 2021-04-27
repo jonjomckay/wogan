@@ -18,7 +18,7 @@ const QUALITY_MAP = {
 class LiveScreen extends StatefulWidget {
   final dynamic station;
 
-  const LiveScreen({Key key, this.station}) : super(key: key);
+  const LiveScreen({Key? key, this.station}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _LiveScreenState();
@@ -26,7 +26,7 @@ class LiveScreen extends StatefulWidget {
 
 class _LiveScreenState extends State<LiveScreen> {
   int _quality = 128000;
-  AudioPlayer _player;
+  AudioPlayer? _player;
   ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
 
   @override
@@ -42,7 +42,7 @@ class _LiveScreenState extends State<LiveScreen> {
   void dispose() {
     super.dispose();
 
-    _player.dispose();
+    _player?.dispose();
   }
 
   _init() async {
@@ -54,8 +54,8 @@ class _LiveScreenState extends State<LiveScreen> {
     ));
 
     try {
-      await _player.setAudioSource(_playlist);
-      await _player.play();
+      await _player?.setAudioSource(_playlist);
+      await _player?.play();
     } catch (e) {
       // TODO: Catch load errors: 404, invalid url ...
       print("An error occurred $e");
@@ -64,6 +64,11 @@ class _LiveScreenState extends State<LiveScreen> {
 
   @override
   Widget build(BuildContext context) {
+    var player = this._player;
+    if (player == null) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       appBar: AppBar(),
       body: Column(
@@ -84,7 +89,7 @@ class _LiveScreenState extends State<LiveScreen> {
             ),
             Container(
               margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-              child: FutureBuilder(
+              child: FutureBuilder<dynamic>(
                 future: SoundsApi().getStationLatestBroadcast(widget.station['id']),
                 builder: (context, snapshot) {
                   var dateFormat = DateFormat.Hm();
@@ -161,7 +166,7 @@ class _LiveScreenState extends State<LiveScreen> {
                       Container(
                         margin: EdgeInsets.all(4),
                         alignment: Alignment.center,
-                        child: Text(programmeSubtitle ?? '',
+                        child: Text(programmeSubtitle,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Theme.of(context).hintColor,
@@ -169,13 +174,13 @@ class _LiveScreenState extends State<LiveScreen> {
                             )
                         ),
                       ),
-                      StreamBuilder<Duration>(
-                        stream: _player.durationStream,
+                      StreamBuilder<Duration?>(
+                        stream: player.durationStream,
                         builder: (context, snapshot) {
                           var playerDuration = snapshot.data ?? Duration.zero;
 
                           return StreamBuilder<Duration>(
-                            stream: _player.positionStream,
+                            stream: player.positionStream,
                             builder: (context, snapshot) {
                               if (!snapshot.hasData || start == null) {
                                 return SeekBar(
@@ -185,7 +190,7 @@ class _LiveScreenState extends State<LiveScreen> {
                                 );
                               }
 
-                              var playerPosition = snapshot.data;
+                              var playerPosition = snapshot.data ?? Duration.zero;
 
                               // Determine the "live" position in the current broadcast programme
                               var livePosition = ((DateTime.now().millisecondsSinceEpoch - start.millisecondsSinceEpoch) / 1000).round();
@@ -203,7 +208,7 @@ class _LiveScreenState extends State<LiveScreen> {
                                 onChangeEnd: (newPosition) {
                                   var seekPosition = duration.inSeconds - livePosition + newPosition.inSeconds;
 
-                                  _player.seek(Duration(seconds: seekPosition));
+                                  player.seek(Duration(seconds: seekPosition));
                                 },
                               );
                             },
@@ -220,13 +225,13 @@ class _LiveScreenState extends State<LiveScreen> {
             Container(
               margin: EdgeInsets.all(12),
               alignment: Alignment.center,
-              child: ControlButtons(_player),
+              child: ControlButtons(player),
             ),
             Container(
               margin: EdgeInsets.all(12),
               alignment: Alignment.center,
               child: StreamBuilder<double>(
-                stream: _player.speedStream,
+                stream: player.speedStream,
                 builder: (context, snapshot) => OutlineButton(
                   child: Text("${QUALITY_MAP[_quality]}",
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -333,7 +338,7 @@ class ControlButtons extends StatelessWidget {
                     style: BorderStyle.solid
                 )),
                 onPressed: () => player.seek(Duration.zero,
-                    index: player.effectiveIndices.first),
+                    index: player.effectiveIndices!.first),
               );
             }
           },
@@ -363,7 +368,7 @@ class ControlButtons extends StatelessWidget {
               style: BorderStyle.solid
           )),
           onPressed: () {
-            player.seek(Duration(seconds: player.duration.inSeconds - 6));
+            player.seek(Duration(seconds: player.duration!.inSeconds - 6));
           },
         )
       ],
@@ -372,10 +377,10 @@ class ControlButtons extends StatelessWidget {
 }
 
 _showQualityDialog({
-  BuildContext context,
-  String title,
-  int value,
-  ValueChanged<int> onChanged,
+  required BuildContext context,
+  required String title,
+  required int value,
+  required ValueChanged<int> onChanged,
 }) {
   showDialog(
     context: context,

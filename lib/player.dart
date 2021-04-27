@@ -6,13 +6,13 @@ class SeekBar extends StatefulWidget {
   final Duration duration;
   final Duration position;
   final Duration bufferedPosition;
-  final ValueChanged<Duration> onChanged;
-  final ValueChanged<Duration> onChangeEnd;
+  final ValueChanged<Duration>? onChanged;
+  final ValueChanged<Duration>? onChangeEnd;
 
   SeekBar({
-    @required this.duration,
-    @required this.position,
-    @required this.bufferedPosition,
+    required this.duration,
+    required this.position,
+    required this.bufferedPosition,
     this.onChanged,
     this.onChangeEnd,
   });
@@ -22,8 +22,8 @@ class SeekBar extends StatefulWidget {
 }
 
 class _SeekBarState extends State<SeekBar> {
-  double _dragValue;
-  SliderThemeData _sliderThemeData;
+  double? _dragValue;
+  SliderThemeData? _sliderThemeData;
 
   @override
   void didChangeDependencies() {
@@ -39,7 +39,7 @@ class _SeekBarState extends State<SeekBar> {
     return Stack(
       children: [
         SliderTheme(
-          data: _sliderThemeData.copyWith(
+          data: _sliderThemeData!.copyWith(
             thumbShape: HiddenThumbComponentShape(),
             activeTrackColor: Colors.blue.shade100,
             inactiveTrackColor: Colors.grey.shade300,
@@ -54,12 +54,12 @@ class _SeekBarState extends State<SeekBar> {
                   _dragValue = value;
                 });
                 if (widget.onChanged != null) {
-                  widget.onChanged(Duration(milliseconds: value.round()));
+                  widget.onChanged!(Duration(milliseconds: value.round()));
                 }
               },
               onChangeEnd: (value) {
                 if (widget.onChangeEnd != null) {
-                  widget.onChangeEnd(Duration(milliseconds: value.round()));
+                  widget.onChangeEnd!(Duration(milliseconds: value.round()));
                 }
                 _dragValue = null;
               },
@@ -67,7 +67,7 @@ class _SeekBarState extends State<SeekBar> {
           ),
         ),
         SliderTheme(
-          data: _sliderThemeData.copyWith(
+          data: _sliderThemeData!.copyWith(
             inactiveTrackColor: Colors.transparent,
           ),
           child: Slider(
@@ -80,12 +80,12 @@ class _SeekBarState extends State<SeekBar> {
                 _dragValue = value;
               });
               if (widget.onChanged != null) {
-                widget.onChanged(Duration(milliseconds: value.round()));
+                widget.onChanged!(Duration(milliseconds: value.round()));
               }
             },
             onChangeEnd: (value) {
               if (widget.onChangeEnd != null) {
-                widget.onChangeEnd(Duration(milliseconds: value.round()));
+                widget.onChangeEnd!(Duration(milliseconds: value.round()));
               }
               _dragValue = null;
             },
@@ -113,7 +113,7 @@ class AudioMetadata {
   final String title;
   final String artwork;
 
-  AudioMetadata({this.album, this.title, this.artwork});
+  AudioMetadata({required this.album, required this.title, required this.artwork});
 }
 
 class HiddenThumbComponentShape extends SliderComponentShape {
@@ -124,16 +124,16 @@ class HiddenThumbComponentShape extends SliderComponentShape {
   void paint(
       PaintingContext context,
       Offset center, {
-        Animation<double> activationAnimation,
-        Animation<double> enableAnimation,
-        bool isDiscrete,
-        TextPainter labelPainter,
-        RenderBox parentBox,
-        SliderThemeData sliderTheme,
-        TextDirection textDirection,
-        double value,
-        double textScaleFactor,
-        Size sizeWithOverflow,
+        required Animation<double> activationAnimation,
+        required Animation<double> enableAnimation,
+        required bool isDiscrete,
+        required TextPainter labelPainter,
+        required RenderBox parentBox,
+        required SliderThemeData sliderTheme,
+        required TextDirection textDirection,
+        required double value,
+        required double textScaleFactor,
+        required Size sizeWithOverflow,
       }) {}
 }
 

@@ -14,14 +14,17 @@ class HomeLiveScreen extends StatefulWidget {
 class _HomeLiveScreenState extends State<HomeLiveScreen> {
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<dynamic>(
       future: SoundsApi().listStations(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        var data = snapshot.data;
+        if (data == null) {
           return Center(child: CircularProgressIndicator());
         }
 
-        var _stations = snapshot.data['data'];
+        // TODO: Check what happens when no internet... display snackbar?
+
+        var _stations = data['data'];
 
         return AnimationLimiter(
           key: UniqueKey(),
