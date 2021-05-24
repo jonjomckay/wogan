@@ -1,11 +1,8 @@
-import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:wogan/api/client.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_player.dart';
@@ -17,19 +14,17 @@ const QUALITY_MAP = {
   320000: 'High'
 };
 
-class LiveScreen extends StatefulWidget {
-  final dynamic station;
+class PlayerScreen extends StatefulWidget {
+  final ProgrammeMetadata metadata;
 
-  const LiveScreen({Key? key, this.station}) : super(key: key);
+  const PlayerScreen({Key? key, required this.metadata}) : super(key: key);
 
   @override
-  State<StatefulWidget> createState() => _LiveScreenState();
+  State<StatefulWidget> createState() => _PlayerScreenState();
 }
 
-class _LiveScreenState extends State<LiveScreen> {
+class _PlayerScreenState extends State<PlayerScreen> {
   int _quality = 128000;
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +38,7 @@ class _LiveScreenState extends State<LiveScreen> {
               margin: EdgeInsets.all(16),
               alignment: Alignment.center,
               child: CachedNetworkImage(
-                  imageUrl: widget.station['network']['logo_url'].replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                  imageUrl: widget.metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
                   placeholder: (context, url) => CircularProgressIndicator(),
                   errorWidget: (context, url, error) => Icon(Icons.error),
                   filterQuality: FilterQuality.high,
@@ -53,41 +48,11 @@ class _LiveScreenState extends State<LiveScreen> {
             ),
             Container(
               margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-              child: FutureBuilder<dynamic>(
-                future: SoundsApi().getStationLatestBroadcast(widget.station['id']),
-                builder: (context, snapshot) {
-                  var data = snapshot.data;
-                  if (data == null) {
-                    return Container();
-                  }
-
-                  var dateFormat = DateFormat.Hm();
-
-                  var broadcast = snapshot.data['data'][0];
-
-                  var start = DateTime.parse(broadcast['start']);
-                  var ends = DateTime.parse(broadcast['end']);
-                  var programmeDuration = broadcast['duration'];
-
-                  var metadata = ProgrammeMetadata(
-                    date: '${dateFormat.format(start)} - ${dateFormat.format(ends)}',
-                    description: broadcast['programme']['titles']['secondary'],
-                    duration: Duration(seconds: programmeDuration),
-                    endsAt: ends,
-                    imageUri: broadcast['programme']['images'][0]['url'],
-                    startsAt: start,
-                    stationId: widget.station['id'],
-                    stationName: widget.station['network']['short_title'],
-                    title: broadcast['programme']['titles']['primary'],
-                  );
-
-                  return Column(
-                    children: [
-                      PlayerMetadata(programme: metadata),
-                      PlayerPlayer(metadata: metadata, quality: _quality)
-                    ],
-                  );
-                },
+              child: Column(
+                children: [
+                  PlayerMetadata(programme: widget.metadata),
+                  PlayerPlayer(metadata: widget.metadata, quality: _quality)
+                ],
               ),
             )
           ]),

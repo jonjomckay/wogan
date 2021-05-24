@@ -7,13 +7,15 @@ class ProgrammeMetadata {
   final String description;
   final Duration duration;
   final DateTime endsAt;
+  final Uri playbackUri;
   final DateTime startsAt;
   final String stationId;
+  final String stationLogo;
   final String stationName;
   final String title;
 
   ProgrammeMetadata(
-      {required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.startsAt, required this.stationId, required this.stationName, required this.title});
+      {required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.playbackUri, required this.startsAt, required this.stationId, required this.stationLogo, required this.stationName, required this.title});
 }
 
 class PlayerMetadata extends StatefulWidget {

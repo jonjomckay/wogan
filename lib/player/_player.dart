@@ -19,18 +19,25 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
   void initState() {
     super.initState();
 
-    _init();
+    _init(true);
   }
 
-  _init() async {
+  _init(bool startFromBeginning) async {
     try {
-      await getAudioHandler().playFromUri(Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${widget.metadata.stationId}/${widget.metadata.stationId}.isml/${widget.metadata.stationId}-audio%3d${widget.quality}.m3u8'), {
+      var position = getAudioHandler().playbackState.value?.position;
+
+      await getAudioHandler().playFromUri(widget.metadata.playbackUri, {
         'title': widget.metadata.title,
         'artist': widget.metadata.stationName,
         'album': widget.metadata.stationName,
         'duration': widget.metadata.duration,
         'artUri': Uri.parse(widget.metadata.imageUri.replaceAll('{recipe}', '320x320'))
       });
+
+      if (position != null && startFromBeginning == false) {
+        await getAudioHandler().seek(position);
+      }
+
       await getAudioHandler().play();
     } catch (e) {
       // TODO: Catch load errors: 404, invalid url ...
@@ -43,7 +50,11 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.quality != widget.quality) {
-      _init();
+      if (oldWidget.metadata.playbackUri != oldWidget.metadata.playbackUri) {
+        _init(true);
+      } else {
+        _init(false);
+      }
     }
   }
 

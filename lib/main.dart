@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:wogan/home_search_screen.dart';
+import 'package:wogan/search/search_delegate.dart';
 
 import 'home_live_screen.dart';
 
@@ -216,6 +217,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Wogan'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              showSearch(context: context, delegate: SoundsSearchDelegate());
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
