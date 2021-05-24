@@ -7,8 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:wogan/api/client.dart';
 import 'package:wogan/main.dart';
-
-import 'player.dart';
+import 'package:wogan/player/_metadata.dart';
+import 'package:wogan/player/_player.dart';
 
 const QUALITY_MAP = {
   48000: 'Lowest',
@@ -28,39 +28,11 @@ class LiveScreen extends StatefulWidget {
 
 class _LiveScreenState extends State<LiveScreen> {
   int _quality = 128000;
-  AudioHandler? _player;
 
-  @override
-  void initState() {
-    super.initState();
 
-    _player = getAudioHandler();
-    _init();
-  }
-
-  _init() async {
-    try {
-      await _player?.playFromUri(Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${widget.station['id']}/${widget.station['id']}.isml/${widget.station['id']}-audio%3d$_quality.m3u8'), {
-        'title': widget.station['titles']['primary'],
-        'artist': widget.station['network']['short_title'],
-        'album': widget.station['network']['short_title'],
-        'duration': Duration(seconds: widget.station['duration']['value']),
-        'artUri': Uri.parse(widget.station['image_url'].replaceAll('{recipe}', '320x320'))
-      });
-      await _player?.play();
-    } catch (e) {
-      // TODO: Catch load errors: 404, invalid url ...
-      print("An error occurred $e");
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    var player = this._player;
-    if (player == null) {
-      return Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
       appBar: AppBar(),
       body: Column(
@@ -84,169 +56,35 @@ class _LiveScreenState extends State<LiveScreen> {
               child: FutureBuilder<dynamic>(
                 future: SoundsApi().getStationLatestBroadcast(widget.station['id']),
                 builder: (context, snapshot) {
-                  var dateFormat = DateFormat.Hm();
-
-                  var programmeImage = widget.station['image_url'];
-                  var programmeDate = widget.station['titles']['secondary'];
-                  var programmeTitle = widget.station['titles']['primary'];
-                  var programmeSubtitle = '';
-                  var programmeDuration = 0;
-                  DateTime? start;
-                  DateTime? ends;
-
-                  if (snapshot.hasData) {
-                    var broadcast = snapshot.data['data'][0];
-
-                    start = DateTime.parse(broadcast['start']);
-                    ends = DateTime.parse(broadcast['end']);
-                    programmeImage = broadcast['programme']['images'][0]['url'];
-                    programmeDate = '${dateFormat.format(start)} - ${dateFormat.format(ends)}';
-                    programmeTitle = broadcast['programme']['titles']['primary'];
-                    programmeSubtitle = broadcast['programme']['titles']['secondary'];
-                    programmeDuration = broadcast['duration'];
+                  var data = snapshot.data;
+                  if (data == null) {
+                    return Container();
                   }
 
+                  var dateFormat = DateFormat.Hm();
+
+                  var broadcast = snapshot.data['data'][0];
+
+                  var start = DateTime.parse(broadcast['start']);
+                  var ends = DateTime.parse(broadcast['end']);
+                  var programmeDuration = broadcast['duration'];
+
+                  var metadata = ProgrammeMetadata(
+                    date: '${dateFormat.format(start)} - ${dateFormat.format(ends)}',
+                    description: broadcast['programme']['titles']['secondary'],
+                    duration: Duration(seconds: programmeDuration),
+                    endsAt: ends,
+                    imageUri: broadcast['programme']['images'][0]['url'],
+                    startsAt: start,
+                    stationId: widget.station['id'],
+                    stationName: widget.station['network']['short_title'],
+                    title: broadcast['programme']['titles']['primary'],
+                  );
+
                   return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: programmeImage.replaceAll('{recipe}', '624x624'),
-                        filterQuality: FilterQuality.high,
-                        width: MediaQuery.of(context).size.width * 0.9,
-                        height: MediaQuery.of(context).size.width * 0.9,
-                        placeholder: (context, url) => Container(
-                          margin: EdgeInsets.all(32),
-                          alignment: Alignment.center,
-                          width: MediaQuery.of(context).size.width * 0.9,
-                          height: MediaQuery.of(context).size.width * 0.9,
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                        errorWidget: (context, url, error) => Icon(Icons.error),
-                        imageBuilder: (context, imageProvider) => Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.rectangle,
-                            image: DecorationImage(
-                                image: imageProvider,
-                                fit: BoxFit.contain
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 15),
-                      Container(
-                        margin: EdgeInsets.all(4),
-                        alignment: Alignment.center,
-                        child: Text(programmeDate,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: Theme.of(context).hintColor,
-                                fontWeight: FontWeight.bold
-                            )),
-                      ),
-                      Container(
-                        margin: EdgeInsets.all(4),
-                        alignment: Alignment.center,
-                        child: Text(programmeTitle,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontFamily: 'serif',
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold
-                            )),
-                      ),
-                      Container(
-                        margin: EdgeInsets.all(4),
-                        alignment: Alignment.center,
-                        child: Text(programmeSubtitle,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                color: Theme.of(context).hintColor,
-                                fontWeight: FontWeight.w300
-                            )
-                        ),
-                      ),
-                      StreamBuilder<MediaItem?>(
-                        stream: player.mediaItem,
-                        builder: (context, snapshot) {
-                          var data = snapshot.data;
-                          if (data == null) {
-                            return Container();
-                          }
-
-                          var playerDuration = data.duration ?? Duration.zero;
-
-                          return StreamBuilder<PlaybackState>(
-                            stream: player.playbackState,
-                            builder: (context, snapshot) {
-                              var data = snapshot.data;
-                              if (data == null || start == null || ends == null) {
-                                return SeekBar(
-                                  duration: Duration.zero,
-                                  position: Duration.zero,
-                                  bufferedPosition: Duration.zero,
-                                );
-                              }
-
-                              var playerPosition = data.position;
-
-
-                              var now = DateTime.now();
-
-                              // TODO: subtract 30 seconds from the end, like bbc sounds does, to solve buffer and skip to end issues
-                              // start of stream
-                              // start of programme
-                              // end of stream = now
-                              // end of programme
-
-                              var startOfStream = now.subtract(playerDuration).toLocal();
-                              var startOfProgramme = start.toLocal();
-                              var currentPosition = startOfStream.add(playerPosition);
-                              var endOfStream = now.subtract(Duration(seconds: 30)).toLocal();
-                              var endOfProgramme = ends.toLocal();
-
-
-                              // log('ss: $startOfStream');
-                              // log('sp: $startOfProgramme');
-                              // log('cp: $currentPosition');
-                              // log('es: $endOfStream');
-                              // log('ep: $endOfProgramme');
-
-                              // log('');
-                              // log('$playerDuration');
-                              // log('$playerPosition');
-
-                              // Determine the "live" position in the current broadcast programme
-                              var livePosition = ((DateTime.now().millisecondsSinceEpoch - start.millisecondsSinceEpoch) / 1000).round();
-
-                              // Get the duration of the current broadcast, not the stream
-                              var duration = Duration(seconds: programmeDuration);
-
-                              // Calculate the player's position relative to the current broadcast
-                              var position = duration - (playerDuration - Duration(seconds: livePosition - (duration.inSeconds - playerPosition.inSeconds)));
-
-                              // log('${endOfStream.difference(startOfStream)}');
-                              // log('${currentPosition.difference(startOfStream)}');
-
-                              return SeekBar(
-                                duration: endOfProgramme.difference(startOfStream),
-                                position: currentPosition.difference(startOfStream),
-                                // duration: duration,
-                                // position: position >= Duration.zero ? position : Duration.zero,
-                                bufferedPosition: endOfStream.difference(startOfStream),
-                                onChangeEnd: (newPosition) async {
-                                  // var seekPosition = duration.inSeconds - livePosition + newPosition.inSeconds;
-                                  if (startOfStream.add(newPosition).isAfter(endOfStream)) {
-                                    return;
-                                  }
-
-                                  await player.seek(newPosition);
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
+                      PlayerMetadata(programme: metadata),
+                      PlayerPlayer(metadata: metadata, quality: _quality)
                     ],
                   );
                 },
@@ -257,7 +95,7 @@ class _LiveScreenState extends State<LiveScreen> {
             Container(
               margin: EdgeInsets.all(12),
               alignment: Alignment.center,
-              child: ControlButtons(player),
+              child: ControlButtons(getAudioHandler()),
             ),
             Container(
               margin: EdgeInsets.all(12),
@@ -271,8 +109,6 @@ class _LiveScreenState extends State<LiveScreen> {
                     value: _quality,
                     onChanged: (value) => setState(() {
                       _quality = value;
-
-                      _init();
                     }),
                   );
                 },
