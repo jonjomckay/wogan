@@ -36,7 +36,7 @@ dependencies:
   flutter_staggered_animations: ^1.0.0
   just_audio: ^0.7.4
   rest_client: ^2.0.1+1
-  timeago_flutter: ^0.3.0
+  timeago: ^3.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

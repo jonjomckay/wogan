@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:timeago_flutter/timeago_flutter.dart';
 import 'package:wogan/live_screen.dart';
+import 'package:wogan/ui/timeago.dart';
 
 import 'api/client.dart';
 
@@ -48,14 +48,7 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LiveScreen(station: station))),
                         title: Text(station['network']['short_title']),
                         subtitle: Text(station['titles']['primary']),
-                        trailing: Timeago(
-                          allowFromNow: true,
-                          date: endsAt,
-                          refreshRate: Duration(seconds: 20),
-                          builder: (context, value) {
-                            return Text('$value left');
-                          },
-                        ),
+                        trailing: TimeAgo(date: endsAt),
                         leading: CachedNetworkImage(
                             imageUrl: station['network']['logo_url'].replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
                             placeholder: (context, url) => Container(),
