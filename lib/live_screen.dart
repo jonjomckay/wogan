@@ -1,10 +1,12 @@
-import 'dart:math';
+import 'dart:developer';
+import 'dart:math' as math;
 
+import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:wogan/api/client.dart';
+import 'package:wogan/main.dart';
 
 import 'player.dart';
 
@@ -26,35 +28,25 @@ class LiveScreen extends StatefulWidget {
 
 class _LiveScreenState extends State<LiveScreen> {
   int _quality = 128000;
-  AudioPlayer? _player;
-  ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
+  AudioHandler? _player;
 
   @override
   void initState() {
     super.initState();
 
-    _player = AudioPlayer();
+    _player = getAudioHandler();
     _init();
   }
 
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    _player?.dispose();
-  }
-
   _init() async {
-    // final session = await AudioSession.instance;
-    // await session.configure(AudioSessionConfiguration.speech());
-
-    await _playlist.add(HlsAudioSource(
-      Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${widget.station['id']}/${widget.station['id']}.isml/${widget.station['id']}-audio%3d$_quality.m3u8')
-    ));
-
     try {
-      await _player?.setAudioSource(_playlist);
+      await _player?.playFromUri(Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${widget.station['id']}/${widget.station['id']}.isml/${widget.station['id']}-audio%3d$_quality.m3u8'), {
+        'title': widget.station['titles']['primary'],
+        'artist': widget.station['network']['short_title'],
+        'album': widget.station['network']['short_title'],
+        'duration': Duration(seconds: widget.station['duration']['value']),
+        'artUri': Uri.parse(widget.station['image_url'].replaceAll('{recipe}', '320x320'))
+      });
       await _player?.play();
     } catch (e) {
       // TODO: Catch load errors: 404, invalid url ...
@@ -99,8 +91,8 @@ class _LiveScreenState extends State<LiveScreen> {
                   var programmeTitle = widget.station['titles']['primary'];
                   var programmeSubtitle = '';
                   var programmeDuration = 0;
-                  var start;
-                  var ends;
+                  DateTime? start;
+                  DateTime? ends;
 
                   if (snapshot.hasData) {
                     var broadcast = snapshot.data['data'][0];
@@ -174,15 +166,21 @@ class _LiveScreenState extends State<LiveScreen> {
                             )
                         ),
                       ),
-                      StreamBuilder<Duration?>(
-                        stream: player.durationStream,
+                      StreamBuilder<MediaItem?>(
+                        stream: player.mediaItem,
                         builder: (context, snapshot) {
-                          var playerDuration = snapshot.data ?? Duration.zero;
+                          var data = snapshot.data;
+                          if (data == null) {
+                            return Container();
+                          }
 
-                          return StreamBuilder<Duration>(
-                            stream: player.positionStream,
+                          var playerDuration = data.duration ?? Duration.zero;
+
+                          return StreamBuilder<PlaybackState>(
+                            stream: player.playbackState,
                             builder: (context, snapshot) {
-                              if (!snapshot.hasData || start == null) {
+                              var data = snapshot.data;
+                              if (data == null || start == null || ends == null) {
                                 return SeekBar(
                                   duration: Duration.zero,
                                   position: Duration.zero,
@@ -190,7 +188,33 @@ class _LiveScreenState extends State<LiveScreen> {
                                 );
                               }
 
-                              var playerPosition = snapshot.data ?? Duration.zero;
+                              var playerPosition = data.position;
+
+
+                              var now = DateTime.now();
+
+                              // TODO: subtract 30 seconds from the end, like bbc sounds does, to solve buffer and skip to end issues
+                              // start of stream
+                              // start of programme
+                              // end of stream = now
+                              // end of programme
+
+                              var startOfStream = now.subtract(playerDuration).toLocal();
+                              var startOfProgramme = start.toLocal();
+                              var currentPosition = startOfStream.add(playerPosition);
+                              var endOfStream = now.subtract(Duration(seconds: 30)).toLocal();
+                              var endOfProgramme = ends.toLocal();
+
+
+                              // log('ss: $startOfStream');
+                              // log('sp: $startOfProgramme');
+                              // log('cp: $currentPosition');
+                              // log('es: $endOfStream');
+                              // log('ep: $endOfProgramme');
+
+                              // log('');
+                              // log('$playerDuration');
+                              // log('$playerPosition');
 
                               // Determine the "live" position in the current broadcast programme
                               var livePosition = ((DateTime.now().millisecondsSinceEpoch - start.millisecondsSinceEpoch) / 1000).round();
@@ -201,14 +225,22 @@ class _LiveScreenState extends State<LiveScreen> {
                               // Calculate the player's position relative to the current broadcast
                               var position = duration - (playerDuration - Duration(seconds: livePosition - (duration.inSeconds - playerPosition.inSeconds)));
 
-                              return SeekBar(
-                                duration: duration,
-                                position: position >= Duration.zero ? position : Duration.zero,
-                                bufferedPosition: Duration(seconds: livePosition),
-                                onChangeEnd: (newPosition) {
-                                  var seekPosition = duration.inSeconds - livePosition + newPosition.inSeconds;
+                              // log('${endOfStream.difference(startOfStream)}');
+                              // log('${currentPosition.difference(startOfStream)}');
 
-                                  player.seek(Duration(seconds: seekPosition));
+                              return SeekBar(
+                                duration: endOfProgramme.difference(startOfStream),
+                                position: currentPosition.difference(startOfStream),
+                                // duration: duration,
+                                // position: position >= Duration.zero ? position : Duration.zero,
+                                bufferedPosition: endOfStream.difference(startOfStream),
+                                onChangeEnd: (newPosition) async {
+                                  // var seekPosition = duration.inSeconds - livePosition + newPosition.inSeconds;
+                                  if (startOfStream.add(newPosition).isAfter(endOfStream)) {
+                                    return;
+                                  }
+
+                                  await player.seek(newPosition);
                                 },
                               );
                             },
@@ -230,24 +262,20 @@ class _LiveScreenState extends State<LiveScreen> {
             Container(
               margin: EdgeInsets.all(12),
               alignment: Alignment.center,
-              child: StreamBuilder<double>(
-                stream: player.speedStream,
-                builder: (context, snapshot) => OutlineButton(
-                  child: Text("${QUALITY_MAP[_quality]}",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  onPressed: () {
-                    _showQualityDialog(
-                      context: context,
-                      title: 'Select quality',
-                      value: _quality,
-                      onChanged: (value) => setState(() {
-                        _quality = value;
+              child: OutlinedButton(
+                child: Text("${QUALITY_MAP[_quality]}", style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  _showQualityDialog(
+                    context: context,
+                    title: 'Select quality',
+                    value: _quality,
+                    onChanged: (value) => setState(() {
+                      _quality = value;
 
-                        _init();
-                      }),
-                    );
-                  },
-                ),
+                      _init();
+                    }),
+                  );
+                },
               ),
             )
           ])
@@ -258,120 +286,141 @@ class _LiveScreenState extends State<LiveScreen> {
 }
 
 class ControlButtons extends StatelessWidget {
-  final AudioPlayer player;
+  final AudioHandler player;
 
   ControlButtons(this.player);
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        MaterialButton(
-          child: Icon(Icons.replay, size: 24, color: Colors.white),
-          height: 48,
-          shape: CircleBorder(side: BorderSide(
-              width: 2,
-              color: Colors.white,
-              style: BorderStyle.solid
-          )),
-          onPressed: () {
-            // TODO: Seek to the beginning of the programme
-            Scaffold.of(context).showSnackBar(SnackBar(content: Text('Not implemented yet!')));
-          },
-        ),
-        MaterialButton(
-          child: Icon(Icons.replay_10, size: 24, color: Colors.white),
-          height: 48,
-          shape: CircleBorder(side: BorderSide(
-            width: 2,
-            color: Colors.white,
-            style: BorderStyle.solid
-          )),
-          onPressed: () {
-            player.seek(Duration(seconds: player.position.inSeconds - 10));
-          },
-        ),
-        StreamBuilder<PlayerState>(
-          stream: player.playerStateStream,
-          builder: (context, snapshot) {
-            final playerState = snapshot.data;
-            final processingState = playerState?.processingState;
-            final playing = playerState?.playing;
-            if (processingState == ProcessingState.loading ||
-                processingState == ProcessingState.buffering) {
-              return Container(
-                margin: EdgeInsets.all(8.0),
-                width: 36.0,
-                height: 36.0,
-                child: CircularProgressIndicator(),
-              );
-            } else if (playing != true) {
-              return MaterialButton(
-                child: Icon(Icons.play_arrow, size: 36, color: Colors.white),
-                height: 64,
-                shape: CircleBorder(side: BorderSide(
-                    width: 2,
-                    color: Colors.white,
-                    style: BorderStyle.solid
-                )),
-                onPressed: player.play,
-              );
-            } else if (processingState != ProcessingState.completed) {
-              return MaterialButton(
-                child: Icon(Icons.pause, size: 36, color: Colors.white),
-                height: 64,
-                shape: CircleBorder(side: BorderSide(
-                    width: 2,
-                    color: Colors.white,
-                    style: BorderStyle.solid
-                )),
-                onPressed: player.pause,
-              );
-            } else {
-              return MaterialButton(
-                child: Icon(Icons.replay, size: 24, color: Colors.white),
-                height: 48,
-                shape: CircleBorder(side: BorderSide(
-                    width: 2,
-                    color: Colors.white,
-                    style: BorderStyle.solid
-                )),
-                onPressed: () => player.seek(Duration.zero,
-                    index: player.effectiveIndices!.first),
-              );
-            }
-          },
-        ),
-        MaterialButton(
-          child: Icon(Icons.forward_10, size: 24, color: Colors.white),
-          height: 48,
-          shape: CircleBorder(side: BorderSide(
-              width: 2,
-              color: Colors.white,
-              style: BorderStyle.solid
-          )),
-          onPressed: () {
-            player.seek(Duration(seconds: player.position.inSeconds + 10));
-          },
-        ),
-        MaterialButton(
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.rotationY(pi),
-            child: Icon(Icons.replay, size: 24, color: Colors.white),
-          ),
-          height: 48,
-          shape: CircleBorder(side: BorderSide(
-              width: 2,
-              color: Colors.white,
-              style: BorderStyle.solid
-          )),
-          onPressed: () {
-            player.seek(Duration(seconds: player.duration!.inSeconds - 6));
-          },
-        )
-      ],
+    return StreamBuilder<PlaybackState>(
+      stream: player.playbackState,
+      builder: (context, snapshot) {
+        var data = snapshot.data;
+        if (data == null) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final processingState = data.processingState;
+        final playing = data.playing;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            MaterialButton(
+              child: Icon(Icons.replay, size: 24, color: Colors.white),
+              height: 48,
+              shape: CircleBorder(side: BorderSide(
+                  width: 2,
+                  color: Colors.white,
+                  style: BorderStyle.solid
+              )),
+              onPressed: () {
+                // TODO: Seek to the beginning of the programme
+                Scaffold.of(context).showSnackBar(SnackBar(content: Text('Not implemented yet!')));
+              },
+            ),
+            MaterialButton(
+              child: Icon(Icons.replay_10, size: 24, color: Colors.white),
+              height: 48,
+              shape: CircleBorder(side: BorderSide(
+                  width: 2,
+                  color: Colors.white,
+                  style: BorderStyle.solid
+              )),
+              onPressed: () {
+                player.seek(Duration(seconds: data.position.inSeconds - 10));
+              },
+            ),
+            Builder(builder: (context) {
+              if (processingState == AudioProcessingState.loading ||
+                  processingState == AudioProcessingState.buffering) {
+                return Container(
+                  margin: EdgeInsets.all(8.0),
+                  width: 36.0,
+                  height: 36.0,
+                  child: CircularProgressIndicator(),
+                );
+              } else if (playing != true) {
+                return MaterialButton(
+                  child: Icon(Icons.play_arrow, size: 36, color: Colors.white),
+                  height: 64,
+                  shape: CircleBorder(side: BorderSide(
+                      width: 2,
+                      color: Colors.white,
+                      style: BorderStyle.solid
+                  )),
+                  onPressed: player.play,
+                );
+              } else if (processingState != AudioProcessingState.completed) {
+                return MaterialButton(
+                  child: Icon(Icons.pause, size: 36, color: Colors.white),
+                  height: 64,
+                  shape: CircleBorder(side: BorderSide(
+                      width: 2,
+                      color: Colors.white,
+                      style: BorderStyle.solid
+                  )),
+                  onPressed: player.pause,
+                );
+              } else {
+                return MaterialButton(
+                  child: Icon(Icons.replay, size: 24, color: Colors.white),
+                  height: 48,
+                  shape: CircleBorder(side: BorderSide(
+                      width: 2,
+                      color: Colors.white,
+                      style: BorderStyle.solid
+                  )),
+                  onPressed: () => player.seek(Duration.zero),
+                );
+              }
+            }),
+            MaterialButton(
+              child: Icon(Icons.forward_10, size: 24, color: Colors.white),
+              height: 48,
+              shape: CircleBorder(side: BorderSide(
+                  width: 2,
+                  color: Colors.white,
+                  style: BorderStyle.solid
+              )),
+              onPressed: () {
+                player.seek(Duration(seconds: data.position.inSeconds + 10));
+              },
+            ),
+            StreamBuilder<MediaItem?>(
+              stream: player.mediaItem,
+              builder: (context, snapshot) {
+                Function() onPressed;
+
+                var data = snapshot.data;
+                if (data == null) {
+                  onPressed = () => null;
+                } else {
+                  onPressed = () {
+                    player.seek(Duration(seconds: data.duration!.inSeconds - 6));
+                  };
+                }
+
+                return MaterialButton(
+                  child: Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.rotationY(math.pi),
+                    child: Icon(Icons.replay, size: 24, color: Colors.white),
+                  ),
+                  height: 48,
+                  shape: CircleBorder(side: BorderSide(
+                      width: 2,
+                      color: Colors.white,
+                      style: BorderStyle.solid
+                  )),
+                  onPressed: onPressed,
+                );
+              },
+            ),
+
+          ],
+        );
+      },
     );
   }
 }

@@ -50,5 +50,10 @@
         <key>NSAllowsArbitraryLoadsForMedia</key>
         <true/>
     </dict>
+
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+    </array>
 </dict>
 </plist>
