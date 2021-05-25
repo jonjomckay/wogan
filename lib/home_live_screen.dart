@@ -39,9 +39,6 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                 var timeLeft = station['duration']['value'] - station['progress']['value'];
                 var endsAt = DateTime.now().add(Duration(seconds: timeLeft));
                 var stationId = station['network']['id'];
-                var quality = 128000;
-
-                var playbackUri = Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${stationId}/${stationId}.isml/${stationId}-audio%3d${quality}.m3u8');
 
                 var metadata = ProgrammeMetadata(
                   date: station['titles']['secondary'],
@@ -49,7 +46,6 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                   duration: Duration(seconds: station['duration']['value']),
                   endsAt: endsAt,
                   imageUri: station['image_url'],
-                  playbackUri: playbackUri,
                   startsAt: DateTime.now().subtract(Duration(seconds: station['progress']['value'])),
                   stationId: station['network']['id'],
                   stationLogo: station['network']['logo_url'],
@@ -64,7 +60,9 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                     horizontalOffset: 50,
                     child: FadeInAnimation(
                       child: ListTile(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata))),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata, getPlaybackUri: (int quality) async {
+                          return Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${stationId}/${stationId}.isml/${stationId}-audio%3d${quality}.m3u8');
+                        }))),
                         title: Text(station['network']['short_title']),
                         subtitle: Text(station['titles']['primary']),
                         trailing: TimeAgo(date: endsAt),

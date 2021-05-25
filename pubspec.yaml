@@ -35,6 +35,7 @@ dependencies:
   cached_network_image: ^3.0.0
   flutter_staggered_animations: ^1.0.0
   just_audio: ^0.7.4
+  pref: ^2.2.0
   rest_client: ^2.0.1+1
   timeago: ^3.0.0
 

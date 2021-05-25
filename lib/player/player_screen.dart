@@ -3,29 +3,23 @@ import 'dart:math' as math;
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:pref/pref.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_player.dart';
-
-const QUALITY_MAP = {
-  48000: 'Lowest',
-  96000: 'Low',
-  128000: 'Normal',
-  320000: 'High'
-};
+import 'package:wogan/player/_quality.dart';
 
 class PlayerScreen extends StatefulWidget {
   final ProgrammeMetadata metadata;
+  final Future<Uri> Function(int quality) getPlaybackUri;
 
-  const PlayerScreen({Key? key, required this.metadata}) : super(key: key);
+  const PlayerScreen({Key? key, required this.metadata, required this.getPlaybackUri}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _PlayerScreenState();
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  int _quality = 128000;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -51,7 +45,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               child: Column(
                 children: [
                   PlayerMetadata(programme: widget.metadata),
-                  PlayerPlayer(metadata: widget.metadata, quality: _quality)
+                  PlayerPlayer(metadata: widget.metadata, getPlaybackUri: widget.getPlaybackUri)
                 ],
               ),
             )
@@ -65,19 +59,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
             Container(
               margin: EdgeInsets.all(12),
               alignment: Alignment.center,
-              child: OutlinedButton(
-                child: Text("${QUALITY_MAP[_quality]}", style: TextStyle(fontWeight: FontWeight.bold)),
-                onPressed: () {
-                  _showQualityDialog(
-                    context: context,
-                    title: 'Select quality',
-                    value: _quality,
-                    onChanged: (value) => setState(() {
-                      _quality = value;
-                    }),
-                  );
-                },
-              ),
+              child: PlayerQuality(),
             )
           ])
         ],
@@ -226,41 +208,5 @@ class ControlButtons extends StatelessWidget {
   }
 }
 
-_showQualityDialog({
-  required BuildContext context,
-  required String title,
-  required int value,
-  required ValueChanged<int> onChanged,
-}) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            child: Column(
-                children: [
-                  ...QUALITY_MAP.entries.map((e) => ListTile(
-                    title: Text(e.value),
-                    subtitle: Text('${(e.key / 1000).round()} kbit/s'),
-                    leading: Radio(
-                        value: e.key,
-                        groupValue: value,
-                        onChanged: (value) {
-                          onChanged(e.key);
 
-                          Navigator.pop(context);
-                        },
-                    ),
-                  ))
-                ]
-            ),
-          )
-        ],
-      ),
-    ),
-  );
-}
 

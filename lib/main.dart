@@ -4,7 +4,9 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:pref/pref.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:wogan/constants.dart';
 import 'package:wogan/home_search_screen.dart';
 import 'package:wogan/search/search_delegate.dart';
 
@@ -22,6 +24,12 @@ void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
+  final service = await PrefServiceShared.init(
+    defaults: {
+      OPTION_STREAM_QUALITY: STREAM_QUALITIES[128000],
+    },
+  );
+
   final session = await AudioSession.instance;
   await session.configure(AudioSessionConfiguration.music());
 
@@ -33,7 +41,10 @@ void main() async {
     ),
   );
 
-  runApp(MyApp());
+  runApp(PrefService(
+    service: service,
+    child: MyApp(),
+  ));
 }
 
 class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {

@@ -82,21 +82,17 @@ class _ShowEpisodes extends StatelessWidget {
               itemCount: results.length,
               itemBuilder: (context, index) {
                 var episode = results[index];
-                var quality = 320000;
 
                 return ListTile(
                   title: Text('${episode['titles']['secondary']}'),
                   subtitle: Text('${episode['synopses']['short']}'),
                   onTap: () async {
-                    var uri = await SoundsApi().getProgrammePlaybackUri(episode['id'], quality);
-
                     var metadata = ProgrammeMetadata(
                         imageUri: episode['image_url'],
                         date: episode['release']['label'],
                         description: episode['titles']['secondary'],
                         duration: Duration(seconds: episode['duration']['value']),
                         endsAt: DateTime.now(), // TODO
-                        playbackUri: Uri.parse(uri),
                         startsAt: DateTime.now(), // TODO
                         stationId: episode['network']['id'],
                         stationLogo: episode['network']['logo_url'],
@@ -104,7 +100,9 @@ class _ShowEpisodes extends StatelessWidget {
                         title: episode['titles']['primary']
                     );
 
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata)));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata, getPlaybackUri: (quality) async {
+                      return await SoundsApi().getProgrammePlaybackUri(episode['id'], quality);
+                    })));
                   },
                 );
               },

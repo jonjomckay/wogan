@@ -1,14 +1,18 @@
+import 'dart:developer';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:pref/pref.dart';
+import 'package:wogan/constants.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_seekbar.dart';
 
 class PlayerPlayer extends StatefulWidget {
   final ProgrammeMetadata metadata;
-  final int quality;
+  final Future<Uri> Function(int quality) getPlaybackUri;
 
-  const PlayerPlayer({Key? key, required this.metadata, required this.quality}) : super(key: key);
+  const PlayerPlayer({Key? key, required this.metadata, required this.getPlaybackUri}) : super(key: key);
 
   @override
   _PlayerPlayerState createState() => _PlayerPlayerState();
@@ -20,13 +24,21 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
     super.initState();
 
     _init(true);
+
+    PrefService.of(context, listen: false)
+      .addKeyListener(OPTION_STREAM_QUALITY, () {
+        _init(false);
+      });
   }
 
   _init(bool startFromBeginning) async {
     try {
       var position = getAudioHandler().playbackState.value?.position;
+      var quality = PrefService.of(context, listen: false).get<int>(OPTION_STREAM_QUALITY)!;
 
-      await getAudioHandler().playFromUri(widget.metadata.playbackUri, {
+      var playbackUri = await widget.getPlaybackUri(quality);
+
+      await getAudioHandler().playFromUri(playbackUri, {
         'title': widget.metadata.title,
         'artist': widget.metadata.stationName,
         'album': widget.metadata.stationName,
@@ -35,6 +47,8 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
       });
 
       if (position != null && startFromBeginning == false) {
+        log('Seeking back to $position');
+
         await getAudioHandler().seek(position);
       }
 
@@ -42,19 +56,6 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
     } catch (e) {
       // TODO: Catch load errors: 404, invalid url ...
       print("An error occurred $e");
-    }
-  }
-
-  @override
-  void didUpdateWidget(PlayerPlayer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.quality != widget.quality) {
-      if (oldWidget.metadata.playbackUri != oldWidget.metadata.playbackUri) {
-        _init(true);
-      } else {
-        _init(false);
-      }
     }
   }
 

@@ -37,7 +37,7 @@ class SoundsApi {
     return response.body;
   }
 
-  Future<String> getProgrammePlaybackUri(String id, int quality) async {
+  Future<Uri> getProgrammePlaybackUri(String id, int quality) async {
     log('Getting the playback URI for the programme $id with the quality $quality');
 
     var client = rc.Client();
@@ -60,13 +60,13 @@ class SoundsApi {
     var pathId = playlistUri.pathSegments[5].replaceFirst('.ism', '');
 
     if (quality <= 96000) {
-      return playlistUri.toString()
+      return Uri.parse(playlistUri.toString()
           .replaceFirst('mobile_wifi_main_sd_abr_v2_uk_hls_master.m3u8',
-          '$pathId-audio_eng_1=$quality.m3u8');
+          '$pathId-audio_eng_1=$quality.m3u8'));
     } else {
-      return playlistUri.toString()
+      return Uri.parse(playlistUri.toString()
           .replaceFirst('mobile_wifi_main_sd_abr_v2_uk_hls_master.m3u8',
-          '$pathId-audio_eng=$quality.m3u8');
+          '$pathId-audio_eng=$quality.m3u8'));
     }
   }
 
