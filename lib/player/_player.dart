@@ -1,64 +1,19 @@
-import 'dart:developer';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:pref/pref.dart';
-import 'package:wogan/constants.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_seekbar.dart';
 
 class PlayerPlayer extends StatefulWidget {
   final ProgrammeMetadata metadata;
-  final Future<Uri> Function(int quality) getPlaybackUri;
 
-  const PlayerPlayer({Key? key, required this.metadata, required this.getPlaybackUri}) : super(key: key);
+  const PlayerPlayer({Key? key, required this.metadata}) : super(key: key);
 
   @override
   _PlayerPlayerState createState() => _PlayerPlayerState();
 }
 
 class _PlayerPlayerState extends State<PlayerPlayer> {
-  @override
-  void initState() {
-    super.initState();
-
-    _init(true);
-
-    PrefService.of(context, listen: false)
-      .addKeyListener(OPTION_STREAM_QUALITY, () {
-        _init(false);
-      });
-  }
-
-  _init(bool startFromBeginning) async {
-    try {
-      var position = getAudioHandler().playbackState.value?.position;
-      var quality = PrefService.of(context, listen: false).get<int>(OPTION_STREAM_QUALITY)!;
-
-      var playbackUri = await widget.getPlaybackUri(quality);
-
-      await getAudioHandler().playFromUri(playbackUri, {
-        'title': widget.metadata.title,
-        'artist': widget.metadata.stationName,
-        'album': widget.metadata.stationName,
-        'duration': widget.metadata.duration,
-        'artUri': Uri.parse(widget.metadata.imageUri.replaceAll('{recipe}', '320x320'))
-      });
-
-      if (position != null && startFromBeginning == false) {
-        log('Seeking back to $position');
-
-        await getAudioHandler().seek(position);
-      }
-
-      await getAudioHandler().play();
-    } catch (e) {
-      // TODO: Catch load errors: 404, invalid url ...
-      print("An error occurred $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<MediaItem?>(

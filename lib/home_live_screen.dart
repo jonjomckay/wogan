@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
 import 'package:wogan/ui/timeago.dart';
@@ -60,9 +61,19 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                     horizontalOffset: 50,
                     child: FadeInAnimation(
                       child: ListTile(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata, getPlaybackUri: (int quality) async {
-                          return Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${stationId}/${stationId}.isml/${stationId}-audio%3d${quality}.m3u8');
-                        }))),
+                        onTap: () async {
+                          var uri = Uri(scheme: 'station', host: stationId);
+
+                          getAudioHandler().playFromUri(uri, {
+                            'title': metadata.title,
+                            'artist': metadata.stationName,
+                            'album': metadata.stationName,
+                            'duration': metadata.duration,
+                            'artUri': Uri.parse(metadata.imageUri.replaceAll('{recipe}', '320x320'))
+                          });
+
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata)));
+                        },
                         title: Text(station['network']['short_title']),
                         subtitle: Text(station['titles']['primary']),
                         trailing: TimeAgo(date: endsAt),

@@ -5,7 +5,9 @@ import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:pref/pref.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:wogan/api/client.dart';
 import 'package:wogan/constants.dart';
 import 'package:wogan/home_search_screen.dart';
 import 'package:wogan/search/search_delegate.dart';
@@ -26,7 +28,7 @@ void main() async {
 
   final service = await PrefServiceShared.init(
     defaults: {
-      OPTION_STREAM_QUALITY: STREAM_QUALITIES[128000],
+      OPTION_STREAM_QUALITY: 128000,
     },
   );
 
@@ -62,6 +64,12 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     //     mediaItem.add(queueValue[index]);
     //   }
     // });
+
+    _player.currentIndexStream.listen((index) {
+      if (index != null) {
+        mediaItem.add(queue.value![index]);
+      }
+    });
 
     _player.sequenceStream.listen((event) {
       var queueValue = queue.value;
@@ -146,26 +154,69 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   @override
   Future playFromUri(Uri uri, [Map<String, dynamic>? extras]) async {
-    var url = uri.toString();
+    var client = SoundsApi();
+    var quality = (await SharedPreferences.getInstance())
+        .getInt(OPTION_STREAM_QUALITY)!;
 
-    log('Playing $url');
+    Uri playbackUri;
 
-    await updateQueue([
-      MediaItem(
-        id: url,
-        title: extras!['title'],
-        artist: extras['artist'],
-        album: extras['album'],
-        duration: extras['duration'],
-        artUri: extras['artUri']
-      )
-    ]);
-    await _player.setUrl(url);
+    switch (uri.scheme) {
+      case 'programme':
+        playbackUri = await client.getProgrammePlaybackUri(uri.host, quality);
+        break;
+      case 'station':
+        playbackUri = Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${uri.host}/${uri.host}.isml/${uri.host}-audio%3d${quality}.m3u8');
+        break;
+      default:
+        log('The playback URI $uri is not supported');
+        return;
+    }
+
+    // If we're already playing the same programme or station, continue from the same position
+    var position = playbackState.value?.position;
+    var seekBack = position != null && this.mediaItem.value?.id == uri.toString();
+
+    log('Playing $playbackUri');
+
+    var mediaItem = MediaItem(
+      id: uri.toString(),
+      title: extras!['title'],
+      artist: extras['artist'],
+      album: extras['album'],
+      duration: extras['duration'],
+      artUri: extras['artUri'],
+    );
+
+    await updateQueue([mediaItem]);
+
+    await _player.setUrl(playbackUri.toString());
+
+    // If we're already playing the same programme or station, continue from the same position
+    if (seekBack) {
+      log('Seeking back to $position');
+
+      await seek(position!);
+    }
+
+    await play();
   }
 
   @override
   Future<dynamic> customAction(String name, Map<String, dynamic>? arguments) async {
     switch (name) {
+      case 'changeQuality':
+        var item = mediaItem.value;
+        if (item != null) {
+          await playFromUri(Uri.parse(item.id), {
+            'title': item.title,
+            'artist': item.artist,
+            'album': item.album,
+            'duration': item.duration,
+            'artUri': item.artUri
+          });
+        }
+
+        break;
       case 'setVolume':
         _player.setVolume(arguments!['volume']);
         break;
@@ -220,37 +271,127 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Widget> _children = [
     HomeLiveScreen(),
     Text('not yet'),
-    Text('not yet'),
+    HomeSearchScreen(),
   ];
+
+
+  @override
+  void initState() {
+    super.initState();
+
+    PrefService.of(context, listen: false)
+        .addKeyListener(OPTION_STREAM_QUALITY, this.onChangeQuality);
+  }
+
+  void onChangeQuality() {
+    getAudioHandler().customAction('changeQuality', null);
+  }
+
+  @override
+  void dispose() {
+    PrefService.of(context, listen: false)
+        .removeKeyListener(OPTION_STREAM_QUALITY, this.onChangeQuality);
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Wogan'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              showSearch(context: context, delegate: SoundsSearchDelegate());
-            },
+    var bottomSheetHeight = 64.0;
+
+    return StreamBuilder<MediaItem?>(
+      stream: getAudioHandler().mediaItem,
+      builder: (context, snapshot) {
+        Widget player = Container(height: 0);
+        EdgeInsets padding = EdgeInsets.zero;
+
+        var data = snapshot.data;
+        if (data != null) {
+          padding = EdgeInsets.only(bottom: bottomSheetHeight);
+          player = Container(
+            color: Theme.of(context).cardColor,
+            height: bottomSheetHeight,
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            width: MediaQuery.of(context).size.width,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        margin: EdgeInsets.symmetric(vertical: 2),
+                        child: Text(data.title),
+                      ),
+                      Container(
+                        margin: EdgeInsets.symmetric(vertical: 2),
+                        child: Text(data.album, style: TextStyle(
+                            color: Theme.of(context).hintColor
+                        )),
+                      ),
+                    ],
+                  ),
+                ),
+                StreamBuilder<PlaybackState>(
+                  stream: getAudioHandler().playbackState,
+                  builder: (context, snapshot) {
+                    var state = snapshot.data;
+                    if (state == null) {
+                      return Container();
+                    }
+
+                    if (state.playing) {
+                      return IconButton(
+                        icon: Icon(Icons.pause_circle_outline, size: 44),
+                        onPressed: () async => await getAudioHandler().pause(),
+                      );
+                    }
+
+                    return IconButton(
+                      icon: Icon(Icons.play_circle_outline, size: 44),
+                      onPressed: () async => await getAudioHandler().play(),
+                    );
+                  },
+                )
+              ],
+            ),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text('Wogan'),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  showSearch(context: context, delegate: SoundsSearchDelegate());
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (value) {
-          setState(() {
-            _currentIndex = value;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.radio), label: 'Live'),
-          BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Music'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-        ],
-      ),
-      body: _children[_currentIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (value) {
+              setState(() {
+                _currentIndex = value;
+              });
+            },
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.radio), label: 'Live'),
+              BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Music'),
+              BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+            ],
+          ),
+          bottomSheet: player,
+          body: Container(
+            padding: padding,
+            child: _children[_currentIndex],
+          ),
+        );
+      },
     );
   }
 }

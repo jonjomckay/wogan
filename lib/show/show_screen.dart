@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:wogan/api/client.dart';
+import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
 
@@ -100,9 +101,17 @@ class _ShowEpisodes extends StatelessWidget {
                         title: episode['titles']['primary']
                     );
 
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata, getPlaybackUri: (quality) async {
-                      return await SoundsApi().getProgrammePlaybackUri(episode['id'], quality);
-                    })));
+                    var uri = Uri(scheme: 'programme', host: episode['id']);
+
+                    getAudioHandler().playFromUri(uri, {
+                      'title': metadata.title,
+                      'artist': metadata.stationName,
+                      'album': metadata.stationName,
+                      'duration': metadata.duration,
+                      'artUri': Uri.parse(metadata.imageUri.replaceAll('{recipe}', '320x320'))
+                    });
+
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata)));
                   },
                 );
               },

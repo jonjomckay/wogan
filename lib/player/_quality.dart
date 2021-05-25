@@ -2,34 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:pref/pref.dart';
 import 'package:wogan/constants.dart';
 
-class PlayerQuality extends StatefulWidget {
+class PlayerQuality extends StatelessWidget {
   const PlayerQuality({Key? key}) : super(key: key);
 
   @override
-  _PlayerQualityState createState() => _PlayerQualityState();
-}
-
-class _PlayerQualityState extends State<PlayerQuality> {
-  @override
-  void initState() {
-    super.initState();
-
-    PrefService.of(context, listen: false).addKeyListener(OPTION_STREAM_QUALITY, () {
-      setState(() {});
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    var _quality = PrefService.of(context).get(OPTION_STREAM_QUALITY);
+    return StreamBuilder<int>(
+      stream: PrefService.of(context).stream(OPTION_STREAM_QUALITY),
+      builder: (context, snapshot) {
+        var data = snapshot.data;
+        if (data == null) {
+          return Center(child: CircularProgressIndicator());
+        }
 
-    return OutlinedButton(
-      child: Text("${STREAM_QUALITIES[_quality]}", style: TextStyle(fontWeight: FontWeight.bold)),
-      onPressed: () {
-        _showQualityDialog(
-          context: context,
-          title: 'Select quality',
-          value: _quality,
+        return OutlinedButton(
+          child: Text("${STREAM_QUALITIES[data]}", style: TextStyle(fontWeight: FontWeight.bold)),
+          onPressed: () {
+            _showQualityDialog(
+              context: context,
+              title: 'Select quality',
+              value: data,
+            );
+          },
         );
       },
     );

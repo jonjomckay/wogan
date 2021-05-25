@@ -29,7 +29,7 @@ dependencies:
   audio_service:
     git:
       url: https://github.com/ryanheise/audio_service.git
-      ref: one-isolate
+      ref: 8e38e0898a28fed8c794eb3d414ecc782e8ce50d
       path: audio_service
   audio_session: ^0.1.0
   cached_network_image: ^3.0.0
@@ -37,6 +37,7 @@ dependencies:
   just_audio: ^0.7.4
   pref: ^2.2.0
   rest_client: ^2.0.1+1
+  shared_preferences: ^2.0.6
   timeago: ^3.0.0
 
   # The following adds the Cupertino Icons font to your application.

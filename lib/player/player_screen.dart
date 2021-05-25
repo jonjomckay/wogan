@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:pref/pref.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_player.dart';
@@ -11,9 +10,8 @@ import 'package:wogan/player/_quality.dart';
 
 class PlayerScreen extends StatefulWidget {
   final ProgrammeMetadata metadata;
-  final Future<Uri> Function(int quality) getPlaybackUri;
 
-  const PlayerScreen({Key? key, required this.metadata, required this.getPlaybackUri}) : super(key: key);
+  const PlayerScreen({Key? key, required this.metadata}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _PlayerScreenState();
@@ -45,7 +43,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
               child: Column(
                 children: [
                   PlayerMetadata(programme: widget.metadata),
-                  PlayerPlayer(metadata: widget.metadata, getPlaybackUri: widget.getPlaybackUri)
+                  PlayerPlayer(metadata: widget.metadata)
                 ],
               ),
             )
