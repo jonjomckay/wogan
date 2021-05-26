@@ -9,9 +9,7 @@ import 'package:wogan/player/_player.dart';
 import 'package:wogan/player/_quality.dart';
 
 class PlayerScreen extends StatefulWidget {
-  final ProgrammeMetadata metadata;
-
-  const PlayerScreen({Key? key, required this.metadata}) : super(key: key);
+  const PlayerScreen({Key? key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() => _PlayerScreenState();
@@ -22,45 +20,57 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(children: [
-            Container(
-              margin: EdgeInsets.all(16),
-              alignment: Alignment.center,
-              child: CachedNetworkImage(
-                  imageUrl: widget.metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                  filterQuality: FilterQuality.high,
-                  height: 64,
-                  width: 64
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-              child: Column(
-                children: [
-                  PlayerMetadata(programme: widget.metadata),
-                  PlayerPlayer(metadata: widget.metadata)
-                ],
-              ),
-            )
-          ]),
-          Column(children: [
-            Container(
-              margin: EdgeInsets.all(12),
-              alignment: Alignment.center,
-              child: ControlButtons(getAudioHandler()),
-            ),
-            Container(
-              margin: EdgeInsets.all(12),
-              alignment: Alignment.center,
-              child: PlayerQuality(),
-            )
-          ])
-        ],
+      body: StreamBuilder<MediaItem?>(
+        stream: getAudioHandler().mediaItem,
+        builder: (context, snapshot) {
+          var mediaItem = snapshot.data;
+          if (mediaItem == null) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          var metadata = ProgrammeMetadata.fromMap(mediaItem.extras!['metadata'] as Map<String, Object>);
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(children: [
+                Container(
+                  margin: EdgeInsets.all(16),
+                  alignment: Alignment.center,
+                  child: CachedNetworkImage(
+                      imageUrl: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                      placeholder: (context, url) => CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => Icon(Icons.error),
+                      filterQuality: FilterQuality.high,
+                      height: 64,
+                      width: 64
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+                  child: Column(
+                    children: [
+                      PlayerMetadata(programme: metadata),
+                      PlayerPlayer(metadata: metadata)
+                    ],
+                  ),
+                )
+              ]),
+              Column(children: [
+                Container(
+                  margin: EdgeInsets.all(12),
+                  alignment: Alignment.center,
+                  child: ControlButtons(getAudioHandler()),
+                ),
+                Container(
+                  margin: EdgeInsets.all(12),
+                  alignment: Alignment.center,
+                  child: PlayerQuality(),
+                )
+              ])
+            ],
+          );
+        },
       ),
     );
   }

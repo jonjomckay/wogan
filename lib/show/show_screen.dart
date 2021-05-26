@@ -104,14 +104,10 @@ class _ShowEpisodes extends StatelessWidget {
                     var uri = Uri(scheme: 'programme', host: episode['id']);
 
                     getAudioHandler().playFromUri(uri, {
-                      'title': metadata.title,
-                      'artist': metadata.stationName,
-                      'album': metadata.stationName,
-                      'duration': metadata.duration,
-                      'artUri': Uri.parse(metadata.imageUri.replaceAll('{recipe}', '320x320'))
+                      'metadata': metadata,
                     });
 
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata)));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen()));
                   },
                 );
               },

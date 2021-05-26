@@ -65,14 +65,10 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                           var uri = Uri(scheme: 'station', host: stationId);
 
                           getAudioHandler().playFromUri(uri, {
-                            'title': metadata.title,
-                            'artist': metadata.stationName,
-                            'album': metadata.stationName,
-                            'duration': metadata.duration,
-                            'artUri': Uri.parse(metadata.imageUri.replaceAll('{recipe}', '320x320'))
+                            'metadata': metadata,
                           });
 
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen(metadata: metadata)));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen()));
                         },
                         title: Text(station['network']['short_title']),
                         subtitle: Text(station['titles']['primary']),

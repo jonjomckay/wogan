@@ -15,6 +15,36 @@ class ProgrammeMetadata {
 
   ProgrammeMetadata(
       {required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.startsAt, required this.stationId, required this.stationLogo, required this.stationName, required this.title});
+
+  factory ProgrammeMetadata.fromMap(Map<String, Object> map) {
+    return ProgrammeMetadata(
+        imageUri: map['imageUri'] as String,
+        date: map['date'] as String,
+        description: map['description'] as String,
+        duration: Duration(milliseconds: map['duration'] as int),
+        endsAt: DateTime.parse(map['endsAt'] as String),
+        startsAt: DateTime.parse(map['startsAt'] as String),
+        stationId: map['stationId'] as String,
+        stationLogo: map['stationLogo'] as String,
+        stationName: map['stationName'] as String,
+        title: map['title'] as String
+    );
+  }
+
+  Map<String, Object> toMap() {
+    return {
+      'imageUri': imageUri,
+      'date': date,
+      'description': description,
+      'duration': duration.inMilliseconds,
+      'endsAt': endsAt.toIso8601String(),
+      'startsAt': startsAt.toIso8601String(),
+      'stationId': stationId,
+      'stationLogo': stationLogo,
+      'stationName': stationName,
+      'title': title
+    };
+  }
 }
 
 class PlayerMetadata extends StatefulWidget {

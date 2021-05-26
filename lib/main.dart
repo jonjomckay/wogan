@@ -10,6 +10,8 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:wogan/api/client.dart';
 import 'package:wogan/constants.dart';
 import 'package:wogan/home_search_screen.dart';
+import 'package:wogan/player/_metadata.dart';
+import 'package:wogan/player/player_screen.dart';
 import 'package:wogan/search/search_delegate.dart';
 
 import 'home_live_screen.dart';
@@ -178,13 +180,18 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
     log('Playing $playbackUri');
 
+    var metadata = extras!['metadata'] as ProgrammeMetadata;
+
     var mediaItem = MediaItem(
       id: uri.toString(),
-      title: extras!['title'],
-      artist: extras['artist'],
-      album: extras['album'],
-      duration: extras['duration'],
-      artUri: extras['artUri'],
+      title: metadata.title,
+      artist: metadata.stationName,
+      album: metadata.stationName,
+      duration: metadata.duration,
+      artUri: Uri.parse(metadata.imageUri.replaceAll('{recipe}', '320x320')),
+      extras: {
+        'metadata': metadata.toMap()
+      }
     );
 
     await updateQueue([mediaItem]);
@@ -212,7 +219,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             'artist': item.artist,
             'album': item.album,
             'duration': item.duration,
-            'artUri': item.artUri
+            'artUri': item.artUri,
+            // TODO metadata
           });
         }
 
@@ -313,49 +321,52 @@ class _MyHomePageState extends State<MyHomePage> {
             height: bottomSheetHeight,
             padding: EdgeInsets.symmetric(horizontal: 16),
             width: MediaQuery.of(context).size.width,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        margin: EdgeInsets.symmetric(vertical: 2),
-                        child: Text(data.title),
-                      ),
-                      Container(
-                        margin: EdgeInsets.symmetric(vertical: 2),
-                        child: Text(data.album, style: TextStyle(
-                            color: Theme.of(context).hintColor
-                        )),
-                      ),
-                    ],
+            child: GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen())),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: 2),
+                          child: Text(data.title),
+                        ),
+                        Container(
+                          margin: EdgeInsets.symmetric(vertical: 2),
+                          child: Text(data.album, style: TextStyle(
+                              color: Theme.of(context).hintColor
+                          )),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                StreamBuilder<PlaybackState>(
-                  stream: getAudioHandler().playbackState,
-                  builder: (context, snapshot) {
-                    var state = snapshot.data;
-                    if (state == null) {
-                      return Container();
-                    }
+                  StreamBuilder<PlaybackState>(
+                    stream: getAudioHandler().playbackState,
+                    builder: (context, snapshot) {
+                      var state = snapshot.data;
+                      if (state == null) {
+                        return Container();
+                      }
 
-                    if (state.playing) {
+                      if (state.playing) {
+                        return IconButton(
+                          icon: Icon(Icons.pause_circle_outline, size: 44),
+                          onPressed: () async => await getAudioHandler().pause(),
+                        );
+                      }
+
                       return IconButton(
-                        icon: Icon(Icons.pause_circle_outline, size: 44),
-                        onPressed: () async => await getAudioHandler().pause(),
+                        icon: Icon(Icons.play_circle_outline, size: 44),
+                        onPressed: () async => await getAudioHandler().play(),
                       );
-                    }
-
-                    return IconButton(
-                      icon: Icon(Icons.play_circle_outline, size: 44),
-                      onPressed: () async => await getAudioHandler().play(),
-                    );
-                  },
-                )
-              ],
+                    },
+                  )
+                ],
+              ),
             ),
           );
         }
