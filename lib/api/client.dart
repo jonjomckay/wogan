@@ -71,6 +71,8 @@ class SoundsApi {
   }
 
   Future<dynamic> getStationLatestBroadcast(String station, { String onAir = "now" }) async {
+    log('Getting the latest broadcast from the station $station');
+
     var client = rc.Client();
 
     var uri = Uri.https('rms.api.bbc.co.uk', '/v2/broadcasts/latest', {
@@ -104,6 +106,8 @@ class SoundsApi {
   }
 
   Future<dynamic> listStations() async {
+    log('Listing all playable stations');
+
     var client = rc.Client();
 
     var request = rc.Request(
