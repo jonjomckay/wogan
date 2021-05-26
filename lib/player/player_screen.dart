@@ -123,18 +123,22 @@ class ControlButtons extends StatelessWidget {
               },
             ),
             Builder(builder: (context) {
+              var size = 64.0;
+
               if (processingState == AudioProcessingState.loading ||
                   processingState == AudioProcessingState.buffering) {
                 return Container(
-                  margin: EdgeInsets.all(8.0),
-                  width: 36.0,
-                  height: 36.0,
-                  child: CircularProgressIndicator(),
+                  margin: EdgeInsets.symmetric(horizontal: 12),
+                  width: size,
+                  height: size,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
                 );
               } else if (playing != true) {
                 return MaterialButton(
                   child: Icon(Icons.play_arrow, size: 36, color: Colors.white),
-                  height: 64,
+                  height: size,
                   shape: CircleBorder(side: BorderSide(
                       width: 2,
                       color: Colors.white,
@@ -145,7 +149,7 @@ class ControlButtons extends StatelessWidget {
               } else if (processingState != AudioProcessingState.completed) {
                 return MaterialButton(
                   child: Icon(Icons.pause, size: 36, color: Colors.white),
-                  height: 64,
+                  height: size,
                   shape: CircleBorder(side: BorderSide(
                       width: 2,
                       color: Colors.white,
@@ -156,7 +160,7 @@ class ControlButtons extends StatelessWidget {
               } else {
                 return MaterialButton(
                   child: Icon(Icons.replay, size: 24, color: Colors.white),
-                  height: 48,
+                  height: size,
                   shape: CircleBorder(side: BorderSide(
                       width: 2,
                       color: Colors.white,
