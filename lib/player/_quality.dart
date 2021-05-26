@@ -16,7 +16,15 @@ class PlayerQuality extends StatelessWidget {
         }
 
         return OutlinedButton(
-          child: Text("${STREAM_QUALITIES[data]}", style: TextStyle(fontWeight: FontWeight.bold)),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Theme.of(context).accentColor
+          ),
+          child: Text("${STREAM_QUALITIES[data]} Quality",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold
+            )
+          ),
           onPressed: () {
             _showQualityDialog(
               context: context,
