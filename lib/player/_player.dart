@@ -38,58 +38,71 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
               );
             }
 
-            var playerPosition = data.position;
+            if (widget.metadata.isLive) {
+              var playerPosition = data.position;
 
 
-            var now = DateTime.now();
+              var now = DateTime.now();
 
-            // TODO: subtract 30 seconds from the end, like bbc sounds does, to solve buffer and skip to end issues
-            // start of stream
-            // start of programme
-            // end of stream = now
-            // end of programme
+              // TODO: subtract 30 seconds from the end, like bbc sounds does, to solve buffer and skip to end issues
+              // start of stream
+              // start of programme
+              // end of stream = now
+              // end of programme
 
-            var startOfStream = now.subtract(playerDuration).toLocal();
-            var startOfProgramme = widget.metadata.startsAt.toLocal();
-            var currentPosition = startOfStream.add(playerPosition);
-            var endOfStream = now.subtract(Duration(seconds: 30)).toLocal();
-            var endOfProgramme = widget.metadata.endsAt.toLocal();
+              var startOfStream = now.subtract(playerDuration).toLocal();
+              var startOfProgramme = widget.metadata.startsAt.toLocal();
+              var currentPosition = startOfStream.add(playerPosition);
+              var endOfStream = now.subtract(Duration(seconds: 30)).toLocal();
+              var endOfProgramme = widget.metadata.endsAt.toLocal();
 
 
-            // log('ss: $startOfStream');
-            // log('sp: $startOfProgramme');
-            // log('cp: $currentPosition');
-            // log('es: $endOfStream');
-            // log('ep: $endOfProgramme');
+              // log('ss: $startOfStream');
+              // log('sp: $startOfProgramme');
+              // log('cp: $currentPosition');
+              // log('es: $endOfStream');
+              // log('ep: $endOfProgramme');
 
-            // log('');
-            // log('$playerDuration');
-            // log('$playerPosition');
+              // log('');
+              // log('$playerDuration');
+              // log('$playerPosition');
 
-            // Determine the "live" position in the current broadcast programme
-            var livePosition = ((DateTime.now().millisecondsSinceEpoch - widget.metadata.endsAt.millisecondsSinceEpoch) / 1000).round();
+              // Determine the "live" position in the current broadcast programme
+              var livePosition = ((DateTime.now().millisecondsSinceEpoch - widget.metadata.endsAt.millisecondsSinceEpoch) / 1000).round();
 
-            // Get the duration of the current broadcast, not the stream
-            var duration = widget.metadata.duration;
+              // Get the duration of the current broadcast, not the stream
+              var duration = widget.metadata.duration;
 
-            // Calculate the player's position relative to the current broadcast
-            var position = duration - (playerDuration - Duration(seconds: livePosition - (duration.inSeconds - playerPosition.inSeconds)));
+              // Calculate the player's position relative to the current broadcast
+              var position = duration - (playerDuration - Duration(seconds: livePosition - (duration.inSeconds - playerPosition.inSeconds)));
 
-            // log('${endOfStream.difference(startOfStream)}');
-            // log('${currentPosition.difference(startOfStream)}');
+              // log('${endOfStream.difference(startOfStream)}');
+              // log('${currentPosition.difference(startOfStream)}');
+
+              return Container();
+
+              return SeekBar(
+                duration: endOfProgramme.difference(startOfStream),
+                position: currentPosition.difference(startOfStream),
+                // duration: duration,
+                // position: position >= Duration.zero ? position : Duration.zero,
+                bufferedPosition: endOfStream.difference(startOfStream),
+                onChangeEnd: (newPosition) async {
+                  // var seekPosition = duration.inSeconds - livePosition + newPosition.inSeconds;
+                  if (startOfStream.add(newPosition).isAfter(endOfStream)) {
+                    return;
+                  }
+
+                  await getAudioHandler().seek(newPosition);
+                },
+              );
+            }
 
             return SeekBar(
-              duration: endOfProgramme.difference(startOfStream),
-              position: currentPosition.difference(startOfStream),
-              // duration: duration,
-              // position: position >= Duration.zero ? position : Duration.zero,
-              bufferedPosition: endOfStream.difference(startOfStream),
+              duration: widget.metadata.duration,
+              position: data.position,
+              bufferedPosition: data.bufferedPosition,
               onChangeEnd: (newPosition) async {
-                // var seekPosition = duration.inSeconds - livePosition + newPosition.inSeconds;
-                if (startOfStream.add(newPosition).isAfter(endOfStream)) {
-                  return;
-                }
-
                 await getAudioHandler().seek(newPosition);
               },
             );

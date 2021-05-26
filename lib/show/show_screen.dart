@@ -94,6 +94,7 @@ class _ShowEpisodes extends StatelessWidget {
                         description: episode['titles']['secondary'],
                         duration: Duration(seconds: episode['duration']['value']),
                         endsAt: DateTime.now(), // TODO
+                        isLive: false,
                         startsAt: DateTime.now(), // TODO
                         stationId: episode['network']['id'],
                         stationLogo: episode['network']['logo_url'],

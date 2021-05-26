@@ -7,6 +7,7 @@ class ProgrammeMetadata {
   final String description;
   final Duration duration;
   final DateTime endsAt;
+  final bool isLive;
   final DateTime startsAt;
   final String stationId;
   final String stationLogo;
@@ -14,7 +15,7 @@ class ProgrammeMetadata {
   final String title;
 
   ProgrammeMetadata(
-      {required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.startsAt, required this.stationId, required this.stationLogo, required this.stationName, required this.title});
+      {required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.isLive, required this.startsAt, required this.stationId, required this.stationLogo, required this.stationName, required this.title});
 
   factory ProgrammeMetadata.fromMap(Map<String, Object> map) {
     return ProgrammeMetadata(
@@ -23,6 +24,7 @@ class ProgrammeMetadata {
         description: map['description'] as String,
         duration: Duration(milliseconds: map['duration'] as int),
         endsAt: DateTime.parse(map['endsAt'] as String),
+        isLive: map['isLive'] as bool,
         startsAt: DateTime.parse(map['startsAt'] as String),
         stationId: map['stationId'] as String,
         stationLogo: map['stationLogo'] as String,
@@ -38,6 +40,7 @@ class ProgrammeMetadata {
       'description': description,
       'duration': duration.inMilliseconds,
       'endsAt': endsAt.toIso8601String(),
+      'isLive': isLive,
       'startsAt': startsAt.toIso8601String(),
       'stationId': stationId,
       'stationLogo': stationLogo,

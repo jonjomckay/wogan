@@ -25,6 +25,9 @@ class _SeekBarState extends State<SeekBar> {
   double? _dragValue;
   SliderThemeData? _sliderThemeData;
 
+  Duration get _elapsed => widget.position;
+  Duration get _remaining => widget.duration - widget.position;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -38,6 +41,16 @@ class _SeekBarState extends State<SeekBar> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
+        Positioned(
+          left: 16.0,
+          bottom: 0.0,
+          child: Text(
+              RegExp(r'((^0*[1-9]\d*:)?\d{2}:\d{2})\.\d+$')
+                  .firstMatch("$_elapsed")
+                  ?.group(1) ??
+                  '$_elapsed',
+              style: Theme.of(context).textTheme.caption),
+        ),
         SliderTheme(
           data: _sliderThemeData!.copyWith(
             thumbShape: HiddenThumbComponentShape(),
@@ -104,8 +117,6 @@ class _SeekBarState extends State<SeekBar> {
       ],
     );
   }
-
-  Duration get _remaining => widget.duration - widget.position;
 }
 
 class HiddenThumbComponentShape extends SliderComponentShape {
