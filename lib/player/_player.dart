@@ -79,8 +79,6 @@ class _PlayerPlayerState extends State<PlayerPlayer> {
               // log('${endOfStream.difference(startOfStream)}');
               // log('${currentPosition.difference(startOfStream)}');
 
-              return Container();
-
               return SeekBar(
                 duration: endOfProgramme.difference(startOfStream),
                 position: currentPosition.difference(startOfStream),
