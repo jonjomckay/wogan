@@ -6,7 +6,7 @@ import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
 import 'package:wogan/ui/timeago.dart';
 
-import 'api/client.dart';
+import '../api/client.dart';
 
 class HomeLiveScreen extends StatefulWidget {
   @override
@@ -14,10 +14,19 @@ class HomeLiveScreen extends StatefulWidget {
 }
 
 class _HomeLiveScreenState extends State<HomeLiveScreen> {
+  late Future<dynamic> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    this._future = SoundsApi().listStations();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<dynamic>(
-      future: SoundsApi().listStations(),
+      future: _future,
       builder: (context, snapshot) {
         var data = snapshot.data;
         if (data == null) {
