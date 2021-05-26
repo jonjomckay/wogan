@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:audio_service/audio_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_player.dart';
 import 'package:wogan/player/_quality.dart';
+import 'package:wogan/ui/image.dart';
 
 class PlayerScreen extends StatefulWidget {
   const PlayerScreen({Key? key}) : super(key: key);
@@ -37,13 +37,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 Container(
                   margin: EdgeInsets.all(16),
                   alignment: Alignment.center,
-                  child: CachedNetworkImage(
-                      imageUrl: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
-                      placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
-                      filterQuality: FilterQuality.high,
-                      height: 64,
-                      width: 64
+                  child: CachedImage(
+                    uri: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                    height: 64,
+                    width: 64
                   ),
                 ),
                 Container(

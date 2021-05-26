@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:wogan/api/client.dart';
 import 'package:wogan/show/show_screen.dart';
+import 'package:wogan/ui/image.dart';
 
 class SoundsSearchDelegate extends SearchDelegate {
   @override
@@ -66,12 +66,9 @@ class SoundsSearchDelegate extends SearchDelegate {
                             margin: EdgeInsets.only(right: 16),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(16),
-                              child: CachedNetworkImage(
-                                  imageUrl: result['image_url'].replaceAll('{recipe}', '400x400'),
-                                  placeholder: (context, url) => Container(),
-                                  errorWidget: (context, url, error) => Icon(Icons.error),
-                                  filterQuality: FilterQuality.high,
-                                  width: 128
+                              child: CachedImage(
+                                uri: result['image_url'].replaceAll('{recipe}', '400x400'),
+                                width: 128
                               ),
                             ),
                           ),

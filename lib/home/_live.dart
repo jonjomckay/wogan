@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
+import 'package:wogan/ui/image.dart';
 import 'package:wogan/ui/timeago.dart';
 
 import '../api/client.dart';
@@ -83,13 +83,10 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
                         title: Text(station['network']['short_title']),
                         subtitle: Text(station['titles']['primary']),
                         trailing: TimeAgo(date: endsAt),
-                        leading: CachedNetworkImage(
-                            imageUrl: station['network']['logo_url'].replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
-                            placeholder: (context, url) => Container(),
-                            errorWidget: (context, url, error) => Icon(Icons.error),
-                            filterQuality: FilterQuality.high,
-                            height: 48,
-                            width: 48
+                        leading: CachedImage(
+                          uri: station['network']['logo_url'].replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                          height: 48,
+                          width: 48
                         ),
                       ),
                     ),

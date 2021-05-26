@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:wogan/api/client.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
+import 'package:wogan/ui/image.dart';
 
 class _ShowDetails extends StatelessWidget {
   final dynamic show;
@@ -16,12 +16,8 @@ class _ShowDetails extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         children: [
-          CachedNetworkImage(
-            imageUrl: show['image_url'].replaceAll('{recipe}', '640x360'),
-            placeholder: (context, url) => Container(),
-            errorWidget: (context, url, error) => Icon(Icons.error),
-            filterQuality: FilterQuality.high,
-            // width: 128
+          CachedImage(
+            uri: show['image_url'].replaceAll('{recipe}', '640x360'),
           ),
           Container(
             margin: EdgeInsets.only(top: 16),

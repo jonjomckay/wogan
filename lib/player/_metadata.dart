@@ -1,5 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:wogan/ui/image.dart';
 
 class ProgrammeMetadata {
   final String imageUri;
@@ -71,27 +71,13 @@ class _PlayerMetadataState extends State<PlayerMetadata> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        CachedNetworkImage(
-          imageUrl: programmeImage.replaceAll('{recipe}', '624x624'),
-          filterQuality: FilterQuality.high,
-          width: MediaQuery.of(context).size.width * 0.9,
-          height: MediaQuery.of(context).size.width * 0.9,
-          placeholder: (context, url) => Container(
-            margin: EdgeInsets.all(32),
-            alignment: Alignment.center,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(64),
+          child: CachedImage(
+            uri: programmeImage.replaceAll('{recipe}', '624x624'),
             width: MediaQuery.of(context).size.width * 0.9,
             height: MediaQuery.of(context).size.width * 0.9,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          errorWidget: (context, url, error) => Icon(Icons.error),
-          imageBuilder: (context, imageProvider) => Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.rectangle,
-              image: DecorationImage(
-                  image: imageProvider,
-                  fit: BoxFit.contain
-              ),
-            ),
+            fit: BoxFit.cover,
           ),
         ),
         SizedBox(height: 15),
