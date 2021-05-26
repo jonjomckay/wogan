@@ -176,7 +176,7 @@ class WoganAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
             'album': item.album,
             'duration': item.duration,
             'artUri': item.artUri,
-            // TODO metadata
+            'metadata': ProgrammeMetadata.fromMap(item.extras!['metadata'])
           });
         }
 
