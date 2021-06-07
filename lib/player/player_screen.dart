@@ -1,11 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 import 'package:wogan/main.dart';
+import 'package:wogan/player/_controls.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_player.dart';
 import 'package:wogan/player/_quality.dart';
+import 'package:wogan/player/_titles.dart';
 import 'package:wogan/ui/image.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -19,7 +20,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: StreamBuilder<MediaItem?>(
         stream: getAudioHandler().mediaItem,
         builder: (context, snapshot) {
@@ -30,42 +30,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
           var metadata = ProgrammeMetadata.fromMap(mediaItem.extras!['metadata'] as Map<String, Object>);
 
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(children: [
-                Container(
-                  margin: EdgeInsets.all(16),
-                  alignment: Alignment.center,
-                  child: CachedImage(
-                    uri: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
-                    height: 64,
-                    width: 64
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-                  child: Column(
-                    children: [
-                      PlayerMetadata(programme: metadata),
-                      PlayerPlayer(metadata: metadata)
-                    ],
-                  ),
-                )
-              ]),
-              Column(children: [
-                Container(
-                  margin: EdgeInsets.all(12),
-                  alignment: Alignment.center,
-                  child: ControlButtons(getAudioHandler()),
-                ),
-                Container(
-                  margin: EdgeInsets.all(12),
-                  alignment: Alignment.center,
-                  child: PlayerQuality(),
-                )
-              ])
-            ],
+          return OrientationLayoutBuilder(
+            portrait: (context) => PlayerScreenPortrait(metadata: metadata),
+            landscape: (context) => PlayerScreenLandscape(metadata: metadata),
           );
         },
       ),
@@ -73,149 +40,110 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 }
 
-class ControlButtons extends StatelessWidget {
-  final AudioHandler player;
+class PlayerScreenLandscape extends StatelessWidget {
+  final ProgrammeMetadata metadata;
 
-  ControlButtons(this.player);
+  const PlayerScreenLandscape({Key? key, required this.metadata}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<PlaybackState>(
-      stream: player.playbackState,
-      builder: (context, snapshot) {
-        var data = snapshot.data;
-        if (data == null) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        final processingState = data.processingState;
-        final playing = data.playing;
-
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            MaterialButton(
-              child: Icon(Icons.replay, size: 24, color: Colors.white),
-              height: 48,
-              shape: CircleBorder(side: BorderSide(
-                  width: 2,
-                  color: Colors.white,
-                  style: BorderStyle.solid
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Row(
+            children: [
+              Container(
+                margin: EdgeInsets.only(right: 16),
+                child: Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: CachedImage(
+                        uri: metadata.imageUri.replaceAll('{recipe}', '624x624'),
+                        width: MediaQuery.of(context).size.width * 0.2,
+                        height: MediaQuery.of(context).size.width * 0.2,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Container(
+                      margin: EdgeInsets.all(4),
+                      child: CachedImage(
+                          uri: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                          height: 32,
+                          width: 32
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              Expanded(child: PlayerMetadataTitles(
+                metadata: metadata,
+                alignment: Alignment.centerLeft,
+                textAlign: TextAlign.left,
               )),
-              onPressed: () {
-                // TODO: Seek to the beginning of the programme
-                Scaffold.of(context).showSnackBar(SnackBar(content: Text('Not implemented yet!')));
-              },
-            ),
-            MaterialButton(
-              child: Icon(Icons.replay_10, size: 24, color: Colors.white),
-              height: 48,
-              shape: CircleBorder(side: BorderSide(
-                  width: 2,
-                  color: Colors.white,
-                  style: BorderStyle.solid
-              )),
-              onPressed: () {
-                player.seek(Duration(seconds: data.position.inSeconds - 10));
-              },
-            ),
-            Builder(builder: (context) {
-              var size = 64.0;
-
-              if (processingState == AudioProcessingState.loading ||
-                  processingState == AudioProcessingState.buffering) {
-                return Container(
-                  margin: EdgeInsets.symmetric(horizontal: 12),
-                  width: size,
-                  height: size,
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              } else if (playing != true) {
-                return MaterialButton(
-                  child: Icon(Icons.play_arrow, size: 36, color: Colors.white),
-                  height: size,
-                  shape: CircleBorder(side: BorderSide(
-                      width: 2,
-                      color: Colors.white,
-                      style: BorderStyle.solid
-                  )),
-                  onPressed: player.play,
-                );
-              } else if (processingState != AudioProcessingState.completed) {
-                return MaterialButton(
-                  child: Icon(Icons.pause, size: 36, color: Colors.white),
-                  height: size,
-                  shape: CircleBorder(side: BorderSide(
-                      width: 2,
-                      color: Colors.white,
-                      style: BorderStyle.solid
-                  )),
-                  onPressed: player.pause,
-                );
-              } else {
-                return MaterialButton(
-                  child: Icon(Icons.replay, size: 24, color: Colors.white),
-                  height: size,
-                  shape: CircleBorder(side: BorderSide(
-                      width: 2,
-                      color: Colors.white,
-                      style: BorderStyle.solid
-                  )),
-                  onPressed: () => player.seek(Duration.zero),
-                );
-              }
-            }),
-            MaterialButton(
-              child: Icon(Icons.forward_10, size: 24, color: Colors.white),
-              height: 48,
-              shape: CircleBorder(side: BorderSide(
-                  width: 2,
-                  color: Colors.white,
-                  style: BorderStyle.solid
-              )),
-              onPressed: () {
-                player.seek(Duration(seconds: data.position.inSeconds + 10));
-              },
-            ),
-            StreamBuilder<MediaItem?>(
-              stream: player.mediaItem,
-              builder: (context, snapshot) {
-                Function() onPressed;
-
-                var data = snapshot.data;
-                if (data == null) {
-                  onPressed = () => null;
-                } else {
-                  onPressed = () {
-                    player.seek(Duration(seconds: data.duration!.inSeconds - 6));
-                  };
-                }
-
-                return MaterialButton(
-                  child: Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.rotationY(math.pi),
-                    child: Icon(Icons.replay, size: 24, color: Colors.white),
-                  ),
-                  height: 48,
-                  shape: CircleBorder(side: BorderSide(
-                      width: 2,
-                      color: Colors.white,
-                      style: BorderStyle.solid
-                  )),
-                  onPressed: onPressed,
-                );
-              },
-            ),
-
-          ],
-        );
-      },
+            ],
+          ),
+          PlayerPlayer(metadata: metadata),
+          Container(
+            margin: EdgeInsets.all(12),
+            alignment: Alignment.center,
+            child: PlayerControls(),
+          )
+        ],
+      ),
     );
   }
 }
 
 
+class PlayerScreenPortrait extends StatelessWidget {
+  final ProgrammeMetadata metadata;
 
+  const PlayerScreenPortrait({Key? key, required this.metadata}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(children: [
+            Container(
+              margin: EdgeInsets.all(16),
+              alignment: Alignment.center,
+              child: CachedImage(
+                  uri: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                  height: 64,
+                  width: 64
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+              child: Column(
+                children: [
+                  PlayerMetadata(programme: metadata),
+                  PlayerPlayer(metadata: metadata)
+                ],
+              ),
+            )
+          ]),
+          Column(children: [
+            Container(
+              margin: EdgeInsets.all(12),
+              alignment: Alignment.center,
+              child: PlayerControls(),
+            ),
+            Container(
+              margin: EdgeInsets.all(12),
+              alignment: Alignment.center,
+              child: PlayerQuality(),
+            )
+          ])
+        ],
+      ),
+    );
+  }
+}

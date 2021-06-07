@@ -111,37 +111,43 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text('Wogan'),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  showSearch(context: context, delegate: SoundsSearchDelegate());
-                },
-              ),
-            ],
-          ),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (value) {
-              setState(() {
-                _currentIndex = value;
-              });
-            },
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.radio), label: 'Live'),
-              BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Music'),
-              BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Speech'),
-            ],
-          ),
-          bottomSheet: player,
-          body: Container(
-            padding: padding,
-            child: _children[_currentIndex],
-          ),
-        );
+        return OrientationBuilder(builder: (context, orientation) {
+          var appBar = orientation == Orientation.landscape
+            ? null
+            : AppBar(
+                title: Text('Wogan'),
+                actions: [
+                  IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () {
+                      showSearch(context: context, delegate: SoundsSearchDelegate());
+                    },
+                  ),
+                ],
+              );
+
+          return Scaffold(
+            appBar: appBar,
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: (value) {
+                setState(() {
+                  _currentIndex = value;
+                });
+              },
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.radio), label: 'Live'),
+                BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Music'),
+                BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Speech'),
+              ],
+            ),
+            bottomSheet: player,
+            body: Container(
+              padding: padding,
+              child: _children[_currentIndex],
+            ),
+          );
+        });
       },
     );
   }

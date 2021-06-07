@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wogan/player/_titles.dart';
 import 'package:wogan/ui/image.dart';
 
 class ProgrammeMetadata {
@@ -81,38 +82,11 @@ class _PlayerMetadataState extends State<PlayerMetadata> {
           ),
         ),
         SizedBox(height: 15),
-        Container(
-          margin: EdgeInsets.all(4),
-          alignment: Alignment.center,
-          child: Text(programmeDate,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Theme.of(context).hintColor,
-                  fontWeight: FontWeight.bold
-              )),
-        ),
-        Container(
-          margin: EdgeInsets.all(4),
-          alignment: Alignment.center,
-          child: Text(programmeTitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontFamily: 'serif',
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold
-              )),
-        ),
-        Container(
-          margin: EdgeInsets.all(4),
-          alignment: Alignment.center,
-          child: Text(programmeSubtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: Theme.of(context).hintColor,
-                  fontWeight: FontWeight.w300
-              )
-          ),
-        ),
+        PlayerMetadataTitles(
+            metadata: widget.programme,
+            alignment: Alignment.center,
+          textAlign: TextAlign.center,
+        )
       ],
     );
   }

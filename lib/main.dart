@@ -1,7 +1,10 @@
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pref/pref.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:wogan/audio/audio_handler.dart';
@@ -19,6 +22,13 @@ void main() async {
   timeago.setLocaleMessages('en', BbcSoundsMessages());
 
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.landscapeRight,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   final service = await PrefServiceShared.init(
     defaults: {
@@ -39,7 +49,10 @@ void main() async {
 
   runApp(PrefService(
     service: service,
-    child: WoganApp(),
+    child: DevicePreview(
+      enabled: !kReleaseMode,
+      builder: (context) => WoganApp(),
+    ),
   ));
 }
 
@@ -50,6 +63,8 @@ class WoganApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'Wogan',
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
       theme: ThemeData(
         primarySwatch: baseColour,
         visualDensity: VisualDensity.adaptivePlatformDensity,
