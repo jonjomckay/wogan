@@ -1,7 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:wogan/api/client.dart';
-import 'package:wogan/show/show_screen.dart';
-import 'package:wogan/ui/image.dart';
+import 'package:wogan/home/_subscriptions.dart';
+import 'package:wogan/models/station.dart';
+import 'package:wogan/models/station_model.dart';
+import 'package:wogan/models/subscription.dart';
+import 'package:wogan/models/subscription_model.dart';
 
 class SoundsSearchDelegate extends SearchDelegate {
   @override
@@ -29,93 +35,89 @@ class SoundsSearchDelegate extends SearchDelegate {
       return Container();
     }
 
-    return FutureBuilder<dynamic>(
-      future: SoundsApi().searchProgrammes(query),
-      builder: (context, snapshot) {
-        switch (snapshot.connectionState) {
-          case ConnectionState.waiting:
-            return Center(child: CircularProgressIndicator());
-          case ConnectionState.done:
-            var error = snapshot.error;
-            if (error != null) {
-              return Center(child: Text('Something went wrong searching. The error was $error'));
-            }
+    return ChangeNotifierProvider(
+      create: (context) => SubscriptionModel(),
+      child: FutureBuilder<dynamic>(
+        future: SoundsApi().searchProgrammes(query),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return Center(child: CircularProgressIndicator());
+            case ConnectionState.done:
+              var error = snapshot.error;
+              if (error != null) {
+                return Center(child: Text('Something went wrong searching. The error was $error'));
+              }
 
-            var data = snapshot.data;
-            if (data == null) {
-              return Center(child: Text('No results were found!'));
-            }
-            
-            var results = List.from(data['data']);
+              var data = snapshot.data;
+              if (data == null) {
+                return Center(child: Text('No results were found!'));
+              }
 
-            return Container(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: results.length,
-                itemBuilder: (context, index) {
-                  var result = results[index];
+              var results = List.from(data['data']);
 
-                  return GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShowScreen(id: result['id']))),
-                    child: Container(
-                      margin: EdgeInsets.only(bottom: 16, left: 8, right: 8),
-                      child: Row(
-                        children: [
-                          Container(
-                            margin: EdgeInsets.only(right: 16),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: CachedImage(
-                                uri: result['image_url'].replaceAll('{recipe}', '400x400'),
-                                width: 128
-                              ),
+              return Consumer<SubscriptionModel>(
+                builder: (context, model, child) {
+                  return FutureBuilder<List<Station>>(
+                    future: StationModel().listStations(),
+                    builder: (context, snapshot) {
+                      var error = snapshot.error;
+                      if (error != null) {
+                        log('Oops', error: error, stackTrace: snapshot.stackTrace);
+                      }
+
+                      var stations = snapshot.data;
+                      if (stations == null) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+
+                      return FutureBuilder<List<Subscription>>(
+                        future: model.listSubscriptions(),
+                        builder: (context, snapshot) {
+                          var error = snapshot.error;
+                          if (error != null) {
+                            log('Oops', error: error, stackTrace: snapshot.stackTrace);
+                          }
+
+                          var subscriptions = snapshot.data;
+                          if (subscriptions == null) {
+                            return Center(child: CircularProgressIndicator());
+                          }
+
+                          return Container(
+                            margin: EdgeInsets.symmetric(vertical: 8),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: results.length,
+                              itemBuilder: (context, index) {
+                                var result = results[index];
+
+                                var subscription = subscriptions.firstWhere((e) => e.urn == result['urn'], orElse: () => Subscription(
+                                    id: result['id'],
+                                    urn: result['urn'],
+                                    description: result['synopses']['short'],
+                                    imageUrl: result['image_url'],
+                                    network: stations.firstWhere((element) => element.id == result['network']['id']),
+                                    title: result['titles']['primary'],
+                                    subscribedAt: null
+                                ));
+
+                                return SubscriptionListTile(subscription: subscription);
+                              },
                             ),
-                          ),
-                          Expanded(child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                margin: EdgeInsets.only(bottom: 4),
-                                child: Text(result['titles']['primary'],
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                margin: EdgeInsets.only(bottom: 4),
-                                child: Text(result['synopses']['short'],
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Container(
-                                child: Text(result['network']['short_title'],
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Theme.of(context).hintColor,
-                                  ),
-                                ),
-                              )
-                            ],
-                          )),
-                        ],
-                      ),
-                    ),
+                          );
+                        },
+                      );
+                    },
                   );
                 },
-              ),
-            );
-          default:
-            // TODO
-            return Container();
-        }
-      },
+              );
+            default:
+              // TODO
+              return Container();
+          }
+        },
+      ),
     );
   }
 
@@ -123,5 +125,4 @@ class SoundsSearchDelegate extends SearchDelegate {
   Widget buildSuggestions(BuildContext context) {
     return Container();
   }
-
 }

@@ -1,3 +1,4 @@
+import 'dart:developer';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -6,10 +7,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pref/pref.dart';
+import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:wogan/audio/audio_handler.dart';
 import 'package:wogan/constants.dart';
+import 'package:wogan/database.dart';
 import 'package:wogan/home/home_screen.dart';
+import 'package:wogan/models/station_model.dart';
+import 'package:wogan/models/subscription_model.dart';
 
 late AudioHandler _audioHandler;
 
@@ -35,6 +40,16 @@ void main() async {
       OPTION_STREAM_QUALITY: 128000,
     },
   );
+
+  // Run the database migrations
+  try {
+    final database = Database();
+    await database.migrate();
+
+    log('Completed');
+  } catch (e, stackTrace) {
+    log('Unable to run the database migrations', error: e, stackTrace: stackTrace);
+  }
 
   final session = await AudioSession.instance;
   await session.configure(AudioSessionConfiguration.music());
@@ -79,7 +94,13 @@ class WoganApp extends StatelessWidget {
         textSelectionColor: baseColour[200],
       ),
       themeMode: ThemeMode.system,
-      home: HomeScreen(),
+      home: MultiProvider(
+        child: HomeScreen(),
+        providers: [
+          ChangeNotifierProvider(create: (context) => StationModel()),
+          ChangeNotifierProvider(create: (context) => SubscriptionModel()),
+        ],
+      ),
     );
   }
 }

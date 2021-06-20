@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:responsive_builder/responsive_builder.dart';
@@ -38,6 +40,13 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
     return FutureBuilder<dynamic>(
       future: _future,
       builder: (context, snapshot) {
+        var error = snapshot.error;
+        if (error != null) {
+          log('Oops', error: error, stackTrace: snapshot.stackTrace);
+
+          return Center(child: Text('Something went wrong searching. The error was $error'));
+        }
+
         var data = snapshot.data;
         if (data == null) {
           return Center(child: CircularProgressIndicator());

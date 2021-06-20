@@ -5,6 +5,7 @@ import 'package:wogan/constants.dart';
 import 'package:wogan/home/_live.dart';
 import 'package:wogan/home/_music.dart';
 import 'package:wogan/home/_speech.dart';
+import 'package:wogan/home/_subscriptions.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/player_screen.dart';
 import 'package:wogan/search/search_delegate.dart';
@@ -16,19 +17,27 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  late BasePrefService _prefService;
+
   List<Widget> _children = [
     HomeLiveScreen(),
     HomeMusicScreen(),
-    HomeSpeechScreen()
+    HomeSpeechScreen(),
+    HomeSubscriptionsScreen(),
   ];
-
 
   @override
   void initState() {
     super.initState();
 
-    PrefService.of(context, listen: false)
-        .addKeyListener(OPTION_STREAM_QUALITY, this.onChangeQuality);
+    this._prefService = PrefService.of(context, listen: false);
+    this._prefService.addKeyListener(OPTION_STREAM_QUALITY, this.onChangeQuality);
+  }
+
+  @override
+  void didChangeDependencies() {
+    context.dependOnInheritedWidgetOfExactType();
+    super.didChangeDependencies();
   }
 
   void onChangeQuality() {
@@ -37,8 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    PrefService.of(context, listen: false)
-        .removeKeyListener(OPTION_STREAM_QUALITY, this.onChangeQuality);
+    this._prefService.removeKeyListener(OPTION_STREAM_QUALITY, this.onChangeQuality);
 
     super.dispose();
   }
@@ -46,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     var bottomSheetHeight = 64.0;
+    var theme = Theme.of(context);
 
     return StreamBuilder<MediaItem?>(
       stream: getAudioHandler().mediaItem,
@@ -113,32 +122,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return OrientationBuilder(builder: (context, orientation) {
           var appBar = orientation == Orientation.landscape
-            ? null
-            : AppBar(
-                title: Text('Wogan'),
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.search),
-                    onPressed: () {
-                      showSearch(context: context, delegate: SoundsSearchDelegate());
-                    },
-                  ),
-                ],
-              );
+              ? null
+              : AppBar(
+            title: Text('Wogan'),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  showSearch(context: context, delegate: SoundsSearchDelegate());
+                },
+              ),
+            ],
+          );
 
           return Scaffold(
             appBar: appBar,
             bottomNavigationBar: BottomNavigationBar(
+              selectedItemColor: Colors.white,
+              unselectedItemColor: Colors.white,
               currentIndex: _currentIndex,
               onTap: (value) {
                 setState(() {
                   _currentIndex = value;
                 });
               },
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.radio), label: 'Live'),
-                BottomNavigationBarItem(icon: Icon(Icons.library_music), label: 'Music'),
-                BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Speech'),
+              items: [
+                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.radio), label: 'Live'),
+                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.library_music), label: 'Music'),
+                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.mic), label: 'Speech'),
+                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.rss_feed), label: 'Subscriptions'),
               ],
             ),
             bottomSheet: player,

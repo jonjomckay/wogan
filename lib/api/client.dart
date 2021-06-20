@@ -1,6 +1,9 @@
 import 'dart:developer';
 
 import 'package:rest_client/rest_client.dart' as rc;
+import 'package:wogan/database.dart';
+import 'package:wogan/models/station.dart';
+import 'package:wogan/models/station_model.dart';
 
 class SoundsApi {
   Future<dynamic> getProgramme(String id) async {
@@ -118,7 +121,24 @@ class SoundsApi {
       request: request,
     );
 
-    return response.body;
+    var body = response.body;
+
+    var database = StationModel();
+
+    await database.saveStations(List.from(body['data'])
+        .map((e) => Station(
+      id: e['id'],
+      urn: e['urn'],
+      coverage: e['coverage'] ?? '',
+      logoUrl: e['network']['logo_url'],
+      longTitle: '',
+      // longTitle: e['network']['long_title'],
+      shortTitle: e['network']['short_title']
+    ))
+        .toList()
+    );
+
+    return body;
   }
 
   Future<dynamic> searchProgrammes(String query) async {
