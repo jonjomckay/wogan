@@ -46,16 +46,30 @@ class _ShowDetails extends StatelessWidget {
   }
 }
 
-class _ShowEpisodes extends StatelessWidget {
+class _ShowEpisodes extends StatefulWidget {
   final ScrollController controller;
   final String id;
 
   const _ShowEpisodes({Key? key, required this.controller, required this.id}) : super(key: key);
 
   @override
+  __ShowEpisodesState createState() => __ShowEpisodesState();
+}
+
+class __ShowEpisodesState extends State<_ShowEpisodes> {
+  late Future<dynamic> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _future = SoundsApi().getProgrammeEpisodes(widget.id);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<dynamic>(
-      future: SoundsApi().getProgrammeEpisodes(id),
+      future: _future,
       builder: (context, snapshot) {
         switch (snapshot.connectionState) {
           case ConnectionState.waiting:
@@ -74,7 +88,7 @@ class _ShowEpisodes extends StatelessWidget {
             var results = List.from(data['data']);
 
             return ListView.builder(
-              controller: controller,
+              controller: widget.controller,
               shrinkWrap: true,
               itemCount: results.length,
               itemBuilder: (context, index) {
@@ -132,6 +146,15 @@ class ShowScreen extends StatefulWidget {
 class _ShowScreenState extends State<ShowScreen> {
   final ScrollController _scrollController = ScrollController();
 
+  late Future<dynamic> _future;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _future = SoundsApi().getProgramme(widget.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -139,7 +162,7 @@ class _ShowScreenState extends State<ShowScreen> {
       body: SingleChildScrollView(
         controller: _scrollController,
         child: FutureBuilder<dynamic>(
-          future: SoundsApi().getProgramme(widget.id),
+          future: _future,
           builder: (context, snapshot) {
             switch (snapshot.connectionState) {
               case ConnectionState.waiting:
