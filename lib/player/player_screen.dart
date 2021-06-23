@@ -7,6 +7,7 @@ import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/_player.dart';
 import 'package:wogan/player/_quality.dart';
 import 'package:wogan/player/_titles.dart';
+import 'package:wogan/player/_track.dart';
 import 'package:wogan/ui/image.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -106,42 +107,29 @@ class PlayerScreenPortrait extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Container(
+      padding: EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Column(children: [
-            Container(
-              margin: EdgeInsets.all(16),
-              alignment: Alignment.center,
-              child: CachedImage(
-                  uri: metadata.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
-                  height: 64,
-                  width: 64
-              ),
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 8),
+            child: PlayerMetadata(programme: metadata),
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 8),
+            child: PlayerPlayer(metadata: metadata),
+          ),
+          Container(
+            margin: EdgeInsets.symmetric(vertical: 16),
+            child: PlayerControls(),
+          ),
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.symmetric(vertical: 8),
+              child: PlayerTrack(metadata: metadata),
             ),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-              child: Column(
-                children: [
-                  PlayerMetadata(programme: metadata),
-                  PlayerPlayer(metadata: metadata)
-                ],
-              ),
-            )
-          ]),
-          Column(children: [
-            Container(
-              margin: EdgeInsets.all(12),
-              alignment: Alignment.center,
-              child: PlayerControls(),
-            ),
-            Container(
-              margin: EdgeInsets.all(12),
-              alignment: Alignment.center,
-              child: PlayerQuality(),
-            )
-          ])
+          ),
         ],
       ),
     );

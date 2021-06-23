@@ -61,6 +61,7 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
             description: station['synopses']?['short'] ?? '',
             duration: Duration(seconds: station['duration']['value']),
             endsAt: DateTime.now().add(Duration(seconds: station['duration']['value'] - station['progress']['value'])),
+            id: station['id'],
             imageUri: station['image_url'],
             isLive: true,
             startsAt: DateTime.now().subtract(Duration(seconds: station['progress']['value'])),

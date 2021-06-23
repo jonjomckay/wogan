@@ -3,6 +3,7 @@ import 'package:wogan/player/_titles.dart';
 import 'package:wogan/ui/image.dart';
 
 class ProgrammeMetadata {
+  final String id;
   final String imageUri;
   final String date;
   final String description;
@@ -16,26 +17,28 @@ class ProgrammeMetadata {
   final String title;
 
   ProgrammeMetadata(
-      {required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.isLive, required this.startsAt, required this.stationId, required this.stationLogo, required this.stationName, required this.title});
+      {required this.id, required this.imageUri, required this.date, required this.description, required this.duration, required this.endsAt, required this.isLive, required this.startsAt, required this.stationId, required this.stationLogo, required this.stationName, required this.title});
 
   factory ProgrammeMetadata.fromMap(Map<String, Object> map) {
     return ProgrammeMetadata(
-        imageUri: map['imageUri'] as String,
-        date: map['date'] as String,
-        description: map['description'] as String,
-        duration: Duration(milliseconds: map['duration'] as int),
-        endsAt: DateTime.parse(map['endsAt'] as String),
-        isLive: map['isLive'] as bool,
-        startsAt: DateTime.parse(map['startsAt'] as String),
-        stationId: map['stationId'] as String,
-        stationLogo: map['stationLogo'] as String,
-        stationName: map['stationName'] as String,
-        title: map['title'] as String
+      id: map['id'] as String,
+      imageUri: map['imageUri'] as String,
+      date: map['date'] as String,
+      description: map['description'] as String,
+      duration: Duration(milliseconds: map['duration'] as int),
+      endsAt: DateTime.parse(map['endsAt'] as String),
+      isLive: map['isLive'] as bool,
+      startsAt: DateTime.parse(map['startsAt'] as String),
+      stationId: map['stationId'] as String,
+      stationLogo: map['stationLogo'] as String,
+      stationName: map['stationName'] as String,
+      title: map['title'] as String
     );
   }
 
   Map<String, Object> toMap() {
     return {
+      'id': id,
       'imageUri': imageUri,
       'date': date,
       'description': description,

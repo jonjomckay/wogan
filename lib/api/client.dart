@@ -40,8 +40,24 @@ class SoundsApi {
     return response.body;
   }
 
-  Future<Uri> getProgrammePlaybackUri(String id, int quality) async {
-    log('Getting the playback URI for the programme $id with the quality $quality');
+  Future<dynamic> getEpisodeTracks(String id) async {
+    log('Loading the tracks for the epiosde $id');
+
+    var client = rc.Client();
+
+    var uri = Uri.https('rms.api.bbc.co.uk', '/v2/versions/$id/segments');
+
+    var request = rc.Request(
+        url: uri.toString()
+    );
+
+    var response = await client.execute(request: request);
+
+    return response.body;
+  }
+
+  Future<Uri> getEpisodePlaybackUri(String id, int quality) async {
+    log('Getting the playback URI for the episode $id with the quality $quality');
 
     var client = rc.Client();
 

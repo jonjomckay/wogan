@@ -147,7 +147,7 @@ class WoganAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler 
 
     switch (uri.scheme) {
       case 'programme':
-        playbackUri = await client.getProgrammePlaybackUri(uri.host, quality);
+        playbackUri = await client.getEpisodePlaybackUri(uri.host, quality);
         break;
       case 'station':
         playbackUri = Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${uri.host}/${uri.host}.isml/${uri.host}-audio%3d${quality}.m3u8');
