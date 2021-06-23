@@ -66,28 +66,36 @@ class PlayerMetadata extends StatefulWidget {
 class _PlayerMetadataState extends State<PlayerMetadata> {
   @override
   Widget build(BuildContext context) {
-    var programmeDate = widget.programme.date;
-    var programmeImage = widget.programme.imageUri;
-    var programmeSubtitle = widget.programme.description;
-    var programmeTitle = widget.programme.title;
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(64),
-          child: CachedImage(
-            uri: programmeImage.replaceAll('{recipe}', '624x624'),
-            width: MediaQuery.of(context).size.width * 0.9,
-            height: MediaQuery.of(context).size.width * 0.9,
-            fit: BoxFit.cover,
+          borderRadius: BorderRadius.circular(48),
+          child: Stack(
+            alignment: Alignment.bottomRight,
+            children: [
+              CachedImage(
+                uri: widget.programme.imageUri.replaceAll('{recipe}', '624x624'),
+                width: MediaQuery.of(context).size.width * 0.75,
+                height: MediaQuery.of(context).size.width * 0.75,
+                fit: BoxFit.cover,
+              ),
+              Container(
+                margin: EdgeInsets.all(16),
+                child: CachedImage(
+                    uri: widget.programme.stationLogo.replaceAll('{type}', 'colour').replaceAll('{size}', '450').replaceAll('{format}', 'png'),
+                    height: 64,
+                    width: 64
+                ),
+              )
+            ],
           ),
         ),
         SizedBox(height: 15),
         PlayerMetadataTitles(
-            metadata: widget.programme,
-            alignment: Alignment.center,
+          metadata: widget.programme,
+          alignment: Alignment.center,
           textAlign: TextAlign.center,
         )
       ],

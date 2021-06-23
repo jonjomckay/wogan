@@ -21,6 +21,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          PlayerQuality()
+        ],
+      ),
       body: StreamBuilder<MediaItem?>(
         stream: getAudioHandler().mediaItem,
         builder: (context, snapshot) {
