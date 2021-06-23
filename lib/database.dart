@@ -6,6 +6,7 @@ import 'package:sqflite_migration_plan/sqflite_migration_plan.dart';
 
 const String DATABASE_NAME = 'wogan.db';
 
+const String TABLE_POSITION = 'position';
 const String TABLE_STATION = 'station';
 const String TABLE_SUBSCRIPTION = 'subscription';
 
@@ -46,11 +47,21 @@ CREATE TABLE IF NOT EXISTS $TABLE_SUBSCRIPTION (
   FOREIGN KEY (network_id) REFERENCES $TABLE_STATION (id)
 )
 ''', reverseSql: 'DROP TABLE $TABLE_SUBSCRIPTION')
+      ],
+      4: [
+        SqlMigration('''
+CREATE TABLE IF NOT EXISTS $TABLE_POSITION (
+  episode_id VARCHAR PRIMARY KEY,
+  position INTEGER NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+''', reverseSql: 'DROP TABLE $TABLE_POSITION')
       ]
     });
 
     await sqflite.openDatabase(DATABASE_NAME,
-        version: 3,
+        version: 4,
         onUpgrade: myMigrationPlan,
         onCreate: myMigrationPlan,
         onDowngrade: myMigrationPlan);
