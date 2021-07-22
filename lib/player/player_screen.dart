@@ -69,8 +69,8 @@ class PlayerScreenLandscape extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       child: CachedImage(
                         uri: metadata.imageUri.replaceAll('{recipe}', '624x624'),
-                        width: MediaQuery.of(context).size.width * 0.2,
-                        height: MediaQuery.of(context).size.width * 0.2,
+                        width: MediaQuery.of(context).size.width * 0.25,
+                        height: MediaQuery.of(context).size.width * 0.25,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -85,18 +85,24 @@ class PlayerScreenLandscape extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(child: PlayerMetadataTitles(
-                metadata: metadata,
-                alignment: Alignment.centerLeft,
-                textAlign: TextAlign.left,
-              )),
+              Expanded(
+                child: Column(
+                  children: [
+                    PlayerMetadataTitles(
+                      metadata: metadata,
+                      alignment: Alignment.center,
+                      textAlign: TextAlign.left,
+                    ),
+                    PlayerPlayer(metadata: metadata),
+                    Container(
+                      margin: EdgeInsets.symmetric(vertical: 16),
+                      alignment: Alignment.center,
+                      child: PlayerControls(),
+                    )
+                  ],
+                ),
+              ),
             ],
-          ),
-          PlayerPlayer(metadata: metadata),
-          Container(
-            margin: EdgeInsets.all(12),
-            alignment: Alignment.center,
-            child: PlayerControls(),
           )
         ],
       ),

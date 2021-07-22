@@ -9,7 +9,10 @@ class PlayerControls extends StatelessWidget {
   Widget build(BuildContext context) {
     var player = getAudioHandler();
 
-    var buttonSize = MediaQuery.of(context).size.width * 0.12;
+    var mediaQuery = MediaQuery.of(context);
+    var buttonSize = mediaQuery.orientation == Orientation.portrait
+      ? mediaQuery.size.width * 0.15
+      : mediaQuery.size.width * 0.1;
 
     return StreamBuilder<PlaybackState>(
       stream: player.playbackState,
@@ -54,25 +57,22 @@ class PlayerControls extends StatelessWidget {
                 },
               ),
             ),
-            Container(
-              width: buttonSize * 1.9,
+            Expanded(
               child: Builder(builder: (context) {
-                var size = buttonSize * 1.4;
-
                 if (processingState == AudioProcessingState.loading ||
                     processingState == AudioProcessingState.buffering) {
                   return Container(
                     margin: EdgeInsets.symmetric(horizontal: 12),
-                    width: size,
-                    height: size,
+                    width: buttonSize,
+                    height: buttonSize,
                     child: Center(
                       child: CircularProgressIndicator(),
                     ),
                   );
                 } else if (playing != true) {
                   return MaterialButton(
-                    child: Icon(Icons.play_arrow, size: 36, color: Colors.white),
-                    height: size,
+                    child: Icon(Icons.play_arrow, size: buttonSize / 2, color: Colors.white),
+                    height: buttonSize,
                     shape: CircleBorder(side: BorderSide(
                         width: 2,
                         color: Colors.white,
@@ -82,8 +82,8 @@ class PlayerControls extends StatelessWidget {
                   );
                 } else if (processingState != AudioProcessingState.completed) {
                   return MaterialButton(
-                    child: Icon(Icons.pause, size: size / 2, color: Colors.white),
-                    height: size,
+                    child: Icon(Icons.pause, size: buttonSize / 2, color: Colors.white),
+                    height: buttonSize,
                     shape: CircleBorder(side: BorderSide(
                         width: 2,
                         color: Colors.white,
@@ -93,8 +93,8 @@ class PlayerControls extends StatelessWidget {
                   );
                 } else {
                   return MaterialButton(
-                    child: Icon(Icons.replay, size: 24, color: Colors.white),
-                    height: size,
+                    child: Icon(Icons.replay, size: buttonSize / 2, color: Colors.white),
+                    height: buttonSize,
                     shape: CircleBorder(side: BorderSide(
                         width: 2,
                         color: Colors.white,
