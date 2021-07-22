@@ -1,0 +1,4 @@
+- Added support for subscribing to shows
+- Added support for resuming playback of a previously-listened show episode
+- Added support for displaying the currently-playing track (where given by the BBC Sounds data)
+- Made the UI a bit friendlier on landscape devices
