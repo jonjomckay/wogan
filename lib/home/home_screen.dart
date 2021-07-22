@@ -51,6 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  void onClickSearch() {
+    showSearch(context: context, delegate: SoundsSearchDelegate());
+  }
+
   @override
   Widget build(BuildContext context) {
     var bottomSheetHeight = 64.0;
@@ -128,9 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () {
-                  showSearch(context: context, delegate: SoundsSearchDelegate());
-                },
+                onPressed: () => onClickSearch()
               ),
             ],
           );
@@ -142,15 +144,21 @@ class _HomeScreenState extends State<HomeScreen> {
               unselectedItemColor: Colors.white,
               currentIndex: _currentIndex,
               onTap: (value) {
-                setState(() {
-                  _currentIndex = value;
-                });
+                if (value == 4) {
+                  onClickSearch();
+                } else {
+                  setState(() {
+                    _currentIndex = value;
+                  });
+                }
               },
               items: [
                 BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.radio), label: 'Live'),
                 BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.library_music), label: 'Music'),
                 BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.mic), label: 'Speech'),
                 BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.rss_feed), label: 'Subscriptions'),
+                if (orientation == Orientation.landscape)
+                  BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.search), label: 'Search'),
               ],
             ),
             bottomSheet: player,
