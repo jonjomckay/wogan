@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:responsive_builder/responsive_builder.dart';
 import 'package:wogan/api/client.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
@@ -12,36 +14,40 @@ class _ShowDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        children: [
-          CachedImage(
+    return Column(
+      children: [
+        Container(
+          margin: EdgeInsets.only(top: 8),
+          child: CachedImage(
             uri: show['image_url'].replaceAll('{recipe}', '640x360'),
           ),
-          Container(
-            margin: EdgeInsets.only(top: 16),
-            child: Text(show['titles']['primary'],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontFamily: 'serif',
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold
-                )
+        ),
+        Column(
+          children: [
+            Container(
+              margin: EdgeInsets.only(top: 16),
+              child: Text(show['titles']['primary'],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontFamily: 'serif',
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold
+                  )
+              ),
             ),
-          ),
-          Container(
-            margin: EdgeInsets.only(top: 16, bottom: 16),
-            child: Text(show['synopses']['short'],
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    color: Theme.of(context).hintColor,
-                    fontWeight: FontWeight.w300
-                )
-            ),
-          ),
-        ],
-      ),
+            Container(
+              margin: EdgeInsets.only(top: 16, bottom: 16),
+              child: Text(show['synopses']['short'],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Theme.of(context).hintColor,
+                      fontWeight: FontWeight.w300
+                  )
+              ),
+            )
+          ],
+        ),
+      ],
     );
   }
 }
@@ -179,11 +185,10 @@ class _ShowScreenState extends State<ShowScreen> {
                 }
 
                 return Container(
-                  child: Column(
-                    children: [
-                      _ShowDetails(show: data),
-                      _ShowEpisodes(id: widget.id, controller: _scrollController)
-                    ],
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  child: OrientationLayoutBuilder(
+                    portrait: (context) => _ShowScreenPortrait(show: data, id: widget.id, scrollController: _scrollController),
+                    landscape: (context) => _ShowScreenLandscape(show: data, id: widget.id, scrollController: _scrollController),
                   ),
                 );
               default:
@@ -193,6 +198,49 @@ class _ShowScreenState extends State<ShowScreen> {
           },
         ),
       ),
+    );
+  }
+}
+
+class _ShowScreenPortrait extends StatelessWidget {
+  final dynamic show;
+  final String id;
+  final ScrollController scrollController;
+
+  const _ShowScreenPortrait({Key? key, required this.show, required this.id, required this.scrollController}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _ShowDetails(show: show),
+        _ShowEpisodes(id: id, controller: scrollController)
+      ],
+    );
+  }
+}
+
+class _ShowScreenLandscape extends StatelessWidget {
+  final dynamic show;
+  final String id;
+  final ScrollController scrollController;
+
+  const _ShowScreenLandscape({Key? key, required this.show, required this.id, required this.scrollController}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Flexible(
+          flex: 1,
+          child: _ShowDetails(show: show),
+        ),
+        Flexible(
+          flex: 2,
+          child: _ShowEpisodes(id: id, controller: scrollController),
+        )
+      ],
     );
   }
 }
