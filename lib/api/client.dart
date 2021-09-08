@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:rest_client/rest_client.dart' as rc;
-import 'package:wogan/database.dart';
 import 'package:wogan/models/station.dart';
 import 'package:wogan/models/station_model.dart';
 
@@ -12,7 +11,7 @@ class SoundsApi {
     var client = rc.Client();
 
     var request = rc.Request(
-      url: 'https://rms.api.bbc.co.uk/v2/programmes/$id/item'
+      url: 'https://rms.api.bbc.co.uk/v2/programmes/$id/container'
     );
 
     var response = await client.execute(request: request);
