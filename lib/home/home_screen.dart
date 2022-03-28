@@ -150,12 +150,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               items: [
-                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.radio), label: 'Live'),
-                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.library_music), label: 'Music'),
-                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.mic), label: 'Speech'),
-                BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.rss_feed), label: 'Subscriptions'),
+                BottomNavigationBarItem(backgroundColor: theme.colorScheme.secondary, icon: Icon(Icons.radio), label: 'Live'),
+                BottomNavigationBarItem(backgroundColor: theme.colorScheme.secondary, icon: Icon(Icons.library_music), label: 'Music'),
+                BottomNavigationBarItem(backgroundColor: theme.colorScheme.secondary, icon: Icon(Icons.mic), label: 'Speech'),
+                BottomNavigationBarItem(backgroundColor: theme.colorScheme.secondary, icon: Icon(Icons.rss_feed), label: 'Subscriptions'),
                 if (orientation == Orientation.landscape)
-                  BottomNavigationBarItem(backgroundColor: theme.accentColor, icon: Icon(Icons.search), label: 'Search'),
+                  BottomNavigationBarItem(backgroundColor: theme.colorScheme.secondary, icon: Icon(Icons.search), label: 'Search'),
               ],
             ),
             bottomSheet: player,
