@@ -121,13 +121,13 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
   }
 
   Future onTapStation(ProgrammeMetadata metadata) async {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen()));
+
     var uri = Uri(scheme: 'station', host: metadata.stationId);
 
     await playFromUri(uri, {
       'metadata': metadata
     });
-
-    Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen()));
   }
 
   @override

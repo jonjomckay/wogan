@@ -70,13 +70,13 @@ class _HomeScreenState extends State<HomeScreen> {
         var data = snapshot.data?.currentSource?.tag as MediaItem?;
         if (data != null) {
           padding = EdgeInsets.only(bottom: bottomSheetHeight);
-          player = Container(
-            color: Theme.of(context).cardColor,
-            height: bottomSheetHeight,
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            width: MediaQuery.of(context).size.width,
-            child: GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen())),
+          player = GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen())),
+            child: Container(
+              color: Theme.of(context).cardColor,
+              height: bottomSheetHeight,
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              width: MediaQuery.of(context).size.width,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
