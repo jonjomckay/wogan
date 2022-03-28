@@ -1,9 +1,4 @@
-import 'dart:math';
-
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:wogan/api/client.dart';
-import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 
 class PlayerMetadataTitles extends StatefulWidget {

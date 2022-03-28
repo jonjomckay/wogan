@@ -1,4 +1,3 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:wogan/api/client.dart';
 import 'package:wogan/main.dart';
@@ -56,15 +55,10 @@ class _PlayerTrackState extends State<PlayerTrack> {
           return Container();
         }
 
-        return StreamBuilder<PlaybackState?>(
-          stream: getAudioHandler().playbackState,
+        return StreamBuilder<Duration?>(
+          stream: getAudioPlayer().positionStream,
           builder: (context, snapshot) {
-            var playbackState = snapshot.data;
-            if (playbackState == null) {
-              return Container();
-            }
-
-            var currentPosition = playbackState.position.inSeconds;
+            var currentPosition = (snapshot.data ?? Duration.zero).inSeconds;
 
             var track = tracks.firstWhere((element) => currentPosition >= element['offset']['start'] && currentPosition <= element['offset']['end'], orElse: () => null);
             if (track == null) {

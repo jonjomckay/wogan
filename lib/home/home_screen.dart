@@ -1,5 +1,6 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:pref/pref.dart';
 import 'package:wogan/constants.dart';
 import 'package:wogan/home/_live.dart';
@@ -41,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void onChangeQuality() {
-    getAudioHandler().customAction('changeQuality', null);
+    changeQuality();
   }
 
   @override
@@ -60,13 +61,13 @@ class _HomeScreenState extends State<HomeScreen> {
     var bottomSheetHeight = 64.0;
     var theme = Theme.of(context);
 
-    return StreamBuilder<MediaItem?>(
-      stream: getAudioHandler().mediaItem,
+    return StreamBuilder<SequenceState?>(
+      stream: getAudioPlayer().sequenceStateStream,
       builder: (context, snapshot) {
         Widget player = Container(height: 0);
         EdgeInsets padding = EdgeInsets.zero;
 
-        var data = snapshot.data;
+        var data = snapshot.data?.currentSource?.tag as MediaItem?;
         if (data != null) {
           padding = EdgeInsets.only(bottom: bottomSheetHeight);
           player = Container(
@@ -90,31 +91,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Container(
                           margin: EdgeInsets.symmetric(vertical: 2),
-                          child: Text(data.album, style: TextStyle(
+                          child: Text(data.album ?? '', style: TextStyle(
                               color: Theme.of(context).hintColor
                           )),
                         ),
                       ],
                     ),
                   ),
-                  StreamBuilder<PlaybackState>(
-                    stream: getAudioHandler().playbackState,
+                  StreamBuilder<bool>(
+                    stream: getAudioPlayer().playingStream,
                     builder: (context, snapshot) {
-                      var state = snapshot.data;
-                      if (state == null) {
-                        return Container();
-                      }
-
-                      if (state.playing) {
+                      var playing = snapshot.data ?? false;
+                      if (playing) {
                         return IconButton(
                           icon: Icon(Icons.pause_circle_outline, size: 44),
-                          onPressed: () async => await getAudioHandler().pause(),
+                          onPressed: () async => await getAudioPlayer().pause(),
                         );
                       }
 
                       return IconButton(
                         icon: Icon(Icons.play_circle_outline, size: 44),
-                        onPressed: () async => await getAudioHandler().play(),
+                        onPressed: () async => await getAudioPlayer().play(),
                       );
                     },
                   )

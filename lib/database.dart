@@ -10,7 +10,7 @@ const String TABLE_POSITION = 'position';
 const String TABLE_STATION = 'station';
 const String TABLE_SUBSCRIPTION = 'subscription';
 
-class Database {
+class DB {
   static Future<sqflite.Database> readOnly() async {
     return sqflite.openDatabase(DATABASE_NAME,
         readOnly: true, singleInstance: false);

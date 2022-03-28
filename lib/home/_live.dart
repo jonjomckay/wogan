@@ -2,8 +2,14 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:responsive_builder/responsive_builder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:wogan/api/client.dart';
+import 'package:wogan/constants.dart';
+import 'package:wogan/database.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
@@ -14,6 +20,95 @@ class HomeLiveScreen extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => _HomeLiveScreenState();
 }
+
+Future<dynamic> changeQuality() async {
+  var item = getAudioPlayer().sequenceState?.currentSource?.tag as MediaItem?;
+  if (item == null) {
+    return;
+  }
+
+  await playFromUri(Uri.parse(item.id), {
+    'title': item.title,
+    'artist': item.artist,
+    'album': item.album,
+    'duration': item.duration,
+    'artUri': item.artUri,
+    'metadata': ProgrammeMetadata.fromMap(item.extras!['metadata'])
+  });
+}
+
+Future playFromUri(Uri uri, [Map<String, dynamic>? extras]) async {
+  var client = SoundsApi();
+  var quality = (await SharedPreferences.getInstance())
+      .getInt(OPTION_STREAM_QUALITY)!;
+
+  Uri playbackUri;
+
+  switch (uri.scheme) {
+    case 'programme':
+      playbackUri = await client.getEpisodePlaybackUri(uri.host, quality);
+      break;
+    case 'station':
+      playbackUri = Uri.parse('http://as-hls-uk-live.akamaized.net/pool_904/live/uk/${uri.host}/${uri.host}.isml/${uri.host}-audio%3d${quality}.m3u8');
+      break;
+    default:
+      log('The playback URI $uri is not supported');
+      return;
+  }
+
+  bool seekBack = false;
+
+  var currentlyPlayingItem = getAudioPlayer().sequenceState?.currentSource?.tag as MediaItem?;
+
+  var position = getAudioPlayer().position;
+  if (position != null) {
+    // If we're already playing the same programme or station, continue from the same position (e.g. the quality was changed)
+    if (currentlyPlayingItem?.id == uri.toString()) {
+      seekBack = true;
+    }
+  }
+
+  if (seekBack == false) {
+    // If we've played this programme before, continue from the stored position
+    var database = await DB.readOnly();
+
+    var storedPosition = sqflite.Sqflite.firstIntValue(await database.rawQuery('SELECT position FROM $TABLE_POSITION WHERE episode_id = ?', [uri.host]));
+    if (storedPosition != null) {
+      position = Duration(seconds: storedPosition);
+      seekBack = true;
+    }
+  }
+
+  log('Playing $playbackUri');
+
+  var metadata = extras!['metadata'] as ProgrammeMetadata;
+
+  var mediaItem = MediaItem(
+      id: uri.toString(),
+      title: metadata.title,
+      artist: metadata.stationName,
+      album: metadata.stationName,
+      duration: metadata.duration,
+      artUri: Uri.parse(metadata.imageUri.replaceAll('{recipe}', '320x320')),
+      extras: {
+        'metadata': metadata.toMap()
+      }
+  );
+
+  var audioSource = AudioSource.uri(playbackUri, tag: mediaItem);
+
+  await getAudioPlayer().setAudioSource(audioSource);
+
+  // If we're already playing the same programme or station, continue from the same position
+  if (seekBack) {
+    log('Seeking back to $position');
+
+    await getAudioPlayer().seek(position);
+  }
+
+  await getAudioPlayer().play();
+}
+
 
 class _HomeLiveScreenState extends State<HomeLiveScreen> {
   late Future<dynamic> _future;
@@ -28,8 +123,8 @@ class _HomeLiveScreenState extends State<HomeLiveScreen> {
   Future onTapStation(ProgrammeMetadata metadata) async {
     var uri = Uri(scheme: 'station', host: metadata.stationId);
 
-    getAudioHandler().playFromUri(uri, {
-      'metadata': metadata,
+    await playFromUri(uri, {
+      'metadata': metadata
     });
 
     Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen()));

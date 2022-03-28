@@ -1,26 +1,28 @@
 import 'dart:developer';
 
-import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:pref/pref.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:wogan/audio/audio_handler.dart';
 import 'package:wogan/constants.dart';
 import 'package:wogan/database.dart';
 import 'package:wogan/home/home_screen.dart';
 import 'package:wogan/models/station_model.dart';
 import 'package:wogan/models/subscription_model.dart';
 
-late AudioHandler _audioHandler;
+late AudioPlayer _audioPlayer;
 
 // TODO
-AudioHandler getAudioHandler() {
-  return _audioHandler;
+AudioPlayer getAudioPlayer() {
+  return _audioPlayer;
 }
 
 void main() async {
@@ -43,7 +45,7 @@ void main() async {
 
   // Run the database migrations
   try {
-    final database = Database();
+    final database = DB();
     await database.migrate();
 
     log('Completed');
@@ -54,12 +56,29 @@ void main() async {
   final session = await AudioSession.instance;
   await session.configure(AudioSessionConfiguration.music());
 
-  _audioHandler = await AudioService.init(
-    builder: () => WoganAudioHandler(),
-    config: AudioServiceConfig(
-      androidNotificationChannelName: 'Wogan',
-      androidEnableQueue: true,
-    ),
+  _audioPlayer = AudioPlayer();
+
+  // TODO: Extract all this out somewhere
+  _audioPlayer.positionStream.throttleTime(Duration(seconds: 5)).listen((position) async {
+    // Every few seconds, store the current position of the playing episode
+    var item = _audioPlayer.sequenceState?.currentSource?.tag as MediaItem?;
+    if (item == null) {
+      return;
+    }
+
+    var database = await DB.writable();
+
+    await database.insert(TABLE_POSITION, {
+      'episode_id': Uri.parse(item.id).host,
+      'position': position.inSeconds,
+      'updated_at': DateTime.now().millisecondsSinceEpoch
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  });
+
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.jonjomckay.wogan',
+    androidNotificationChannelName: 'Audio playback',
+    androidNotificationOngoing: true,
   );
 
   runApp(PrefService(

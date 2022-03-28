@@ -1,10 +1,19 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:wogan/api/client.dart';
+import 'package:wogan/home/_live.dart';
+import 'package:wogan/home/_subscriptions.dart';
 import 'package:wogan/main.dart';
+import 'package:wogan/models/subscription.dart';
+import 'package:wogan/models/subscription_model.dart';
 import 'package:wogan/player/_metadata.dart';
 import 'package:wogan/player/player_screen.dart';
+import 'package:wogan/search/search_delegate.dart';
 import 'package:wogan/ui/image.dart';
 
 class _ShowDetails extends StatelessWidget {
@@ -14,40 +23,66 @@ class _ShowDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          margin: EdgeInsets.only(top: 8),
-          child: CachedImage(
-            uri: show['image_url'].replaceAll('{recipe}', '640x360'),
-          ),
-        ),
-        Column(
-          children: [
-            Container(
-              margin: EdgeInsets.only(top: 16),
-              child: Text(show['titles']['primary'],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      fontFamily: 'serif',
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold
-                  )
-              ),
-            ),
-            Container(
-              margin: EdgeInsets.only(top: 16, bottom: 16),
-              child: Text(show['synopses']['short'],
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Theme.of(context).hintColor,
-                      fontWeight: FontWeight.w300
-                  )
-              ),
-            )
-          ],
-        ),
-      ],
+    return ChangeNotifierProvider(
+      create: (context) => SubscriptionModel(),
+      builder: (context, child) {
+        return StationAwareWidget(builder: (context, stations) {
+          return SubscriptionAwareWidget(builder: (context, subscriptions) {
+            var subscription = subscriptions.firstWhere((e) => e.urn == show['urn'], orElse: () => Subscription(
+                id: show['id'],
+                urn: show['urn'],
+                description: show['synopses']['short'],
+                imageUrl: show['image_url'],
+                network: stations.firstWhere((element) => element.id == show['network']['id']),
+                title: show['titles']['primary'],
+                subscribedAt: null
+            ));
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: 8),
+                  child: CachedImage(
+                    uri: show['image_url'].replaceAll('{recipe}', '640x360'),
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: EdgeInsets.only(top: 16),
+                      child: Text(show['titles']['primary'],
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                              fontFamily: 'serif',
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold
+                          )
+                      ),
+                    ),
+                    Container(
+                      margin: EdgeInsets.only(top: 8, bottom: 8),
+                      child: Text(show['synopses']['short'],
+                          textAlign: TextAlign.left,
+                          style: TextStyle(
+                              color: Theme.of(context).hintColor,
+                              fontWeight: FontWeight.w300
+                          )
+                      ),
+                    ),
+                    Container(
+                      child: SubscribeButton(
+                        subscription: subscription,
+                      ),
+                    )
+                  ],
+                ),
+              ],
+            );
+          });
+        });
+      },
     );
   }
 }
@@ -100,9 +135,42 @@ class __ShowEpisodesState extends State<_ShowEpisodes> {
               itemBuilder: (context, index) {
                 var episode = results[index];
 
-                return ListTile(
-                  title: Text('${episode['titles']['secondary']}'),
-                  subtitle: Text('${episode['synopses']['short']}'),
+                return InkWell(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          margin: EdgeInsets.only(right: 12),
+                          child: CachedImage(uri: episode['image_url'].replaceAll('{recipe}', '192x192'), width: 96, height: 96),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${episode['titles']['secondary']}', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600
+                              )),
+                              Container(
+                                  margin: EdgeInsets.only(top: 4),
+                                  child: Text('${episode['synopses']['short']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(
+                                    height: 1.5
+                                  ))
+                              ),
+                              Container(
+                                margin: EdgeInsets.only(top: 8),
+                                child: Text('${episode['release']['label']} • ${episode['duration']['label']}', style: TextStyle(
+                                    color: Theme.of(context).hintColor,
+                                  fontSize: 12
+                                )),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
                   onTap: () async {
                     var metadata = ProgrammeMetadata(
                         imageUri: episode['image_url'],
@@ -121,8 +189,8 @@ class __ShowEpisodesState extends State<_ShowEpisodes> {
 
                     var uri = Uri(scheme: 'programme', host: episode['id']);
 
-                    getAudioHandler().playFromUri(uri, {
-                      'metadata': metadata,
+                    await playFromUri(uri, {
+                      'metadata': metadata
                     });
 
                     Navigator.push(context, MaterialPageRoute(builder: (context) => PlayerScreen()));
@@ -238,7 +306,10 @@ class _ShowScreenLandscape extends StatelessWidget {
         ),
         Flexible(
           flex: 2,
-          child: _ShowEpisodes(id: id, controller: scrollController),
+          child: Container(
+            margin: EdgeInsets.only(left: 16),
+            child: _ShowEpisodes(id: id, controller: scrollController)
+          ),
         )
       ],
     );

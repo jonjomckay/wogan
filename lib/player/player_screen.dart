@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:responsive_builder/responsive_builder.dart';
 import 'package:wogan/main.dart';
 import 'package:wogan/player/_controls.dart';
@@ -26,10 +27,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
           PlayerQuality()
         ],
       ),
-      body: StreamBuilder<MediaItem?>(
-        stream: getAudioHandler().mediaItem,
+      body: StreamBuilder<SequenceState?>(
+        stream: getAudioPlayer().sequenceStateStream,
         builder: (context, snapshot) {
-          var mediaItem = snapshot.data;
+          var mediaItem = snapshot.data?.currentSource?.tag as MediaItem?;
           if (mediaItem == null) {
             return Center(child: CircularProgressIndicator());
           }

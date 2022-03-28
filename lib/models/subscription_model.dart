@@ -5,7 +5,7 @@ import 'package:wogan/models/subscription.dart';
 
 class SubscriptionModel extends ChangeNotifier {
   Future<void> deleteSubscription(String id) async {
-    var database = await Database.writable();
+    var database = await DB.writable();
 
     await database.delete(TABLE_SUBSCRIPTION, where: 'id = ?', whereArgs: [id]);
 
@@ -13,7 +13,7 @@ class SubscriptionModel extends ChangeNotifier {
   }
 
   Future<List<Subscription>> listSubscriptions() async {
-    var database = await Database.writable();
+    var database = await DB.writable();
 
     // await database.delete(TABLE_SUBSCRIPTION);
 
@@ -23,7 +23,7 @@ class SubscriptionModel extends ChangeNotifier {
   }
 
   Future<void> saveSubscription(Subscription subscription) async {
-    var database = await Database.writable();
+    var database = await DB.writable();
 
     subscription.subscribedAt = DateTime.now();
 

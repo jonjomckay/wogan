@@ -47,8 +47,6 @@ class SubscriptionListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var model = context.read<SubscriptionModel>();
-
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShowScreen(id: subscription.id))),
       child: Container(
@@ -99,14 +97,8 @@ class SubscriptionListTile extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  child: _SubscribeButton(
-                    subscription: subscription,
-                    onSubscribe: () async {
-                      await model.saveSubscription(subscription);
-                    },
-                    onUnsubscribe: () async {
-                      await model.deleteSubscription(subscription.id);
-                    },
+                  child: SubscribeButton(
+                    subscription: subscription
                   ),
                 )
               ],
@@ -118,20 +110,22 @@ class SubscriptionListTile extends StatelessWidget {
   }
 }
 
-class _SubscribeButton extends StatelessWidget {
+class SubscribeButton extends StatelessWidget {
   final Subscription subscription;
-  final Function() onSubscribe;
-  final Function() onUnsubscribe;
 
-  const _SubscribeButton({Key? key, required this.subscription, required this.onSubscribe, required this.onUnsubscribe}) : super(key: key);
+  const SubscribeButton({Key? key, required this.subscription}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (subscription.subscribedAt == null) {
-      return ElevatedButton(onPressed: () => onSubscribe(), child: Text('Subscribe'));
-    }
+    return Consumer<SubscriptionModel>(
+      builder: (context, model, child) {
+        if (subscription.subscribedAt == null) {
+          return ElevatedButton(onPressed: () => model.saveSubscription(subscription), child: Text('Subscribe'));
+        }
 
-    return ElevatedButton(onPressed: () => onUnsubscribe(), child: Text('Unsubscribe'));
+        return ElevatedButton(onPressed: () => model.deleteSubscription(subscription.id), child: Text('Unsubscribe'));
+      },
+    );
   }
 }
 

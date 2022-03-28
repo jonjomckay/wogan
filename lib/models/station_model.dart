@@ -6,7 +6,7 @@ import 'package:wogan/models/station.dart';
 
 class StationModel extends ChangeNotifier {
   Future<List<Station>> listStations() async {
-    var database = await Database.readOnly();
+    var database = await DB.readOnly();
 
     return (await database.query(TABLE_STATION))
         .map((e) => Station.fromMap(e))
@@ -16,7 +16,7 @@ class StationModel extends ChangeNotifier {
   Future<void> saveStations(List<Station> stations) async {
     log('Saving stations');
 
-    var database = await Database.writable();
+    var database = await DB.writable();
     
     var batch = database.batch();
 
