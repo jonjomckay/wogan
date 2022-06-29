@@ -56,7 +56,7 @@ void main() async {
   final session = await AudioSession.instance;
   await session.configure(AudioSessionConfiguration.music());
 
-  _audioPlayer = AudioPlayer();
+  _audioPlayer = AudioPlayer(androidOffloadSchedulingEnabled: true);
 
   // TODO: Extract all this out somewhere
   _audioPlayer.positionStream.throttleTime(Duration(seconds: 5)).listen((position) async {

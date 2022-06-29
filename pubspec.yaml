@@ -29,8 +29,16 @@ dependencies:
   device_preview: ^1.0.0
   extended_image: ^6.0.2+1
   flutter_staggered_animations: ^1.0.0
-  just_audio: ^0.9.20
-  just_audio_background: ^0.0.1-beta.5
+  just_audio:
+    git:
+      url: https://github.com/ryanheise/just_audio
+      ref: feature/offload_scheduling
+      path: just_audio
+  just_audio_background:
+    git:
+      url: https://github.com/ryanheise/just_audio
+      ref: feature/offload_scheduling
+      path: just_audio_background
   pref: ^2.5.0
   responsive_builder: ^0.4.2
   rest_client: ^2.1.1

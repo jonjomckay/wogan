@@ -14,7 +14,7 @@ packages:
       name: audio_service
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.18.4"
+    version: "0.18.6"
   audio_service_platform_interface:
     dependency: transitive
     description:
@@ -35,7 +35,7 @@ packages:
       name: audio_session
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.6+1"
+    version: "0.1.8"
   boolean_selector:
     dependency: transitive
     description:
@@ -234,24 +234,28 @@ packages:
   just_audio:
     dependency: "direct main"
     description:
-      name: just_audio
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.9.20"
+      path: just_audio
+      ref: "feature/offload_scheduling"
+      resolved-ref: "47d321b500fc3767384698619c37e0b434f3e6c6"
+      url: "https://github.com/ryanheise/just_audio"
+    source: git
+    version: "0.9.27"
   just_audio_background:
     dependency: "direct main"
     description:
-      name: just_audio_background
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.1-beta.5"
+      path: just_audio_background
+      ref: "feature/offload_scheduling"
+      resolved-ref: "47d321b500fc3767384698619c37e0b434f3e6c6"
+      url: "https://github.com/ryanheise/just_audio"
+    source: git
+    version: "0.0.1-beta.7"
   just_audio_platform_interface:
     dependency: transitive
     description:
       name: just_audio_platform_interface
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "4.1.0"
+    version: "4.2.0"
   just_audio_web:
     dependency: transitive
     description:
